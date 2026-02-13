@@ -17,7 +17,7 @@ import Icon1 from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import Icon2 from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import API from '../API/axiosConfig';
 import BannerCarousel from './BannerCarousel';
 
 // Screen width and height
@@ -94,18 +94,24 @@ const Home = () => {
   const [userName, setUserName] = useState('')
   const [profileImage, setProfileimage] = useState(null)
 
+  const CARD_WIDTH = width * 0.8;
+  const CARD_MARGIN = scale(getResponsiveSize(15));
+  const FULL_SIZE = CARD_WIDTH + CARD_MARGIN;
+
   useEffect(() => {
     if (!studentTestimonials?.length) return;
 
     const interval = setInterval(() => {
-      setTestimonialIndex(prev => {
+      setTestimonialIndex((prev) => {
         const nextIndex =
           prev === studentTestimonials?.length - 1 ? 0 : prev + 1;
 
-        testimonialRef.current?.scrollToIndex({
-          index: nextIndex,
-          animated: true,
-        });
+        if (testimonialRef.current) {
+          testimonialRef.current.scrollToIndex({
+            index: nextIndex,
+            animated: true,
+          });
+        }
         return nextIndex;
       });
     }, 3000);
@@ -176,8 +182,8 @@ const Home = () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem("token");
-      const response = await axios.get(
-        "https://fornix-medical.vercel.app/api/v1/home",
+      const response = await API.get(
+        "/home",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -219,8 +225,8 @@ const Home = () => {
 
         if (!token || !userId) return;
 
-        const response = await axios.post(
-          "https://fornix-medical.vercel.app/api/v1/user/get",
+        const response = await API.post(
+          "/user/get",
           { id: userId },
           {
             headers: {
@@ -254,7 +260,7 @@ const Home = () => {
     setActiveFilter(filter);
     // Navigate to Mood screen when Live Quiz is pressed
     if (filter === 'Live Quiz') {
-      navigation.navigate('Mood');
+      // navigation.navigate('Mood');
     }
   };
 
@@ -401,7 +407,7 @@ const Home = () => {
           </View>
         </View>
 
-        <Text style={styles.Titletext}>Your Program (30)</Text>        
+        <Text style={styles.Titletext}>Your Program (30)</Text>
         <View style={styles.filterContainer}>
           {filterTabs.map((filter) => (
             <TouchableOpacity
@@ -462,14 +468,20 @@ const Home = () => {
               renderItem={renderStudentItem}
               keyExtractor={(item) => item.id.toString()}
               horizontal
-              pagingEnabled
-              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={FULL_SIZE}
+              decelerationRate="fast"
               getItemLayout={(data, index) => ({
-                length: width * 0.8 + 15,
-                offset: (width * 0.8 + 15) * index,
+                length: FULL_SIZE,
+                offset: FULL_SIZE * index,
                 index,
               })}
-              onScrollToIndexFailed={() => { }}
+              onScrollToIndexFailed={(info) => {
+                const wait = new Promise(resolve => setTimeout(resolve, 500));
+                wait.then(() => {
+                  testimonialRef.current?.scrollToIndex({ index: info.index, animated: true });
+                });
+              }}
             />
           )}
         </View>

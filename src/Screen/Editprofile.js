@@ -11,38 +11,75 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Dimensions,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon1 from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Added useSafeAreaInsets import
+import API from '../API/axiosConfig'; // Added API import
 
 const inputdata = [
-  { id: 1, label: "Name", icon: "person-outline" },
-  { id: 2, label: "Mobile", icon: "call-outline" },
-  { id: 3, label: "Email", icon: "mail-outline" },
-  { id: 4, label: "Gender", icon: "male-female-outline" },
+  { id: 1, label: "Name", icon: "person-outline", key: "full_name" }, // Added key for mapping
+  { id: 2, label: "Mobile", icon: "call-outline", key: "phone" }, // Added key for mapping
+  { id: 3, label: "Email", icon: "mail-outline", key: "email" }, // Added key for mapping
+  { id: 4, label: "Gender", icon: "male-female-outline", key: "gender" }, // Added key for mapping
 ];
 
-const Editprofile = (props) => {
-  // console.log(props)
-  const { data } = props.route.params
-  console.log(data)
-  const [formData, setFormData] = useState({
-    Name: data?.full_name,
-    Mobile: data?.phone,
-    Email: data?.email,
-    Gender: data?.gender,
-  });
-  const [loading, setLoading] = useState(false);
-  const [isFocused, setIsFocused] = useState({});
+const { width } = Dimensions.get('window');
+
+const Editprofile = () => { // Removed props
+  const insets = useSafeAreaInsets(); // Added useSafeAreaInsets
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState({ // Changed from formData to userData
+    full_name: '',
+    email: '',
+    phone: '',
+    gender: '',
+    profile_picture: null,
+  });
+  const [isFocused, setIsFocused] = useState({}); // Kept isFocused state
 
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
+  const fetchUserData = async () => {
+    try {
+      const userId = await AsyncStorage.getItem("user_id");
+      const token = await AsyncStorage.getItem("token");
 
-  const handleChange = (key, value) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
+      if (!userId || !token) return;
+
+      const response = await API.post( // Used API instance
+        "/user/get", // Relative URL
+        { id: userId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setUserData({
+          full_name: response.data.user.full_name,
+          email: response.data.user.email,
+          phone: response.data.user.phone,
+          gender: response.data.user.gender,
+          profile_picture: response.data.user.profile_picture,
+        });
+      }
+    } catch (error) {
+      console.log("FETCH USER DATA ERROR", error.response?.data || error.message);
+    }
+  };
+
+  const handleChange = (key, value) => { // Modified handleChange to use userData
+    setUserData(prev => ({ ...prev, [key]: value }));
   };
 
   const handleFocus = (field) => {
@@ -53,10 +90,9 @@ const Editprofile = (props) => {
     setIsFocused(prev => ({ ...prev, [field]: false }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async () => { // Renamed from handleUpdate to handleSubmit for consistency
     try {
       setLoading(true);
-
       const token = await AsyncStorage.getItem("token");
       const userId = await AsyncStorage.getItem("user_id");
 
@@ -65,14 +101,14 @@ const Editprofile = (props) => {
         return;
       }
 
-      await axios.put(
-        `https://fornix-medical.vercel.app/api/v1/user/update`,
+      const response = await API.post( // Used API instance and relative URL
+        "/user/update",
         {
           id: userId,
-          full_name: formData.Name,
-          phone: formData.Mobile,
-          email: formData.Email,
-          gender: formData.Gender,
+          full_name: userData.full_name,
+          phone: userData.phone, // Added phone
+          email: userData.email, // Added email
+          gender: userData.gender,
         },
         {
           headers: {
@@ -82,12 +118,16 @@ const Editprofile = (props) => {
         }
       );
 
-      Alert.alert("Success", "Profile updated successfully");
-      navigation.goBack();
+      if (response.data.success) { // Check for success property
+        Alert.alert("Success", "Profile updated successfully!");
+        navigation.goBack();
+      } else {
+        Alert.alert("Error", response.data.message || "Failed to update profile");
+      }
 
     } catch (error) {
       Alert.alert("Error", "Update failed");
-      console.log("API ERROR ", error.response?.data || error.message)
+      console.log("API ERROR ", error.response?.data || error.message);
     } finally {
       setLoading(false);
     }
@@ -122,7 +162,7 @@ const Editprofile = (props) => {
           <View style={styles.profileIconContainer}>
             <View style={styles.profileIcon}>
               <Image source={{
-                uri: data.profile_picture
+                uri: userData.profile_picture
               }} style={{ height: 100, width: 100, borderRadius: 50, }} />
               {/* <Icon1 name="person" size={70} color="#F87F16" /> */}
             </View>
@@ -151,7 +191,7 @@ const Editprofile = (props) => {
                     placeholder={`Enter ${item.label.toLowerCase()}`}
                     placeholderTextColor="#888"
                     style={styles.input}
-                    value={formData[item.label] || ""}
+                    value={userData[item.key] || ""}
                     autoCapitalize={item.label === "Email" ? "none" : "words"}
                     maxLength={item.label === "Mobile" ? 10 : 50}
                     keyboardType={
@@ -161,7 +201,7 @@ const Editprofile = (props) => {
                           ? "email-address"
                           : "default"
                     }
-                    onChangeText={(text) => handleChange(item.label, text)}
+                    onChangeText={(text) => handleChange(item.key, text)}
                   // onFocus={() => handleFocus(item.label)}
                   // onBlur={() => handleBlur(item.label)}
                   />

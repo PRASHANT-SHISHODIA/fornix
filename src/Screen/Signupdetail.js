@@ -19,6 +19,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API from '../API/axiosConfig';
 import { Controller, set, useForm } from 'react-hook-form';
 import RazorpayCheckout from 'react-native-razorpay';
 
@@ -166,6 +167,7 @@ const Signupdetail = ({ route }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   // New fields
   const [dob, setDob] = useState('');
@@ -259,7 +261,7 @@ const Signupdetail = ({ route }) => {
     try {
       const userId = await AsyncStorage.getItem('user_id');
       if (userId) {
-        const res = await axios.post("https://fornix-medical.vercel.app/api/v1/user/get", { id: userId });
+        const res = await API.post("/user/get", { id: userId });
         if (res.data.success) {
           setUser(res.data)
         }
@@ -322,8 +324,8 @@ const Signupdetail = ({ route }) => {
 
       console.log("FREE REGISTER PAYLOAD 👉", payload);
 
-      const response = await axios.post(
-        "https://fornix-medical.vercel.app/api/v1/auth/register-free",
+      const response = await API.post(
+        "/auth/register-free",
         payload
       );
 
@@ -350,9 +352,11 @@ const Signupdetail = ({ route }) => {
       }
     } catch (error) {
       console.log("FREE REGISTER ERROR ❌", error.response?.data || error);
+      const errorData = error.response?.data;
+      const errorMsg = errorData?.error || errorData?.message || "Something went wrong";
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Something went wrong"
+        errorMsg
       );
     } finally {
       setLoading(false);
@@ -381,7 +385,7 @@ const Signupdetail = ({ route }) => {
   const fetchQualifiedCountries = async () => {
     try {
       setLoadingCountries(true);
-      const response = await axios.get('https://fornix-medical.vercel.app/api/v1/mobile/countries');
+      const response = await API.get('/mobile/countries');
 
       if (response.data.success) {
         setQualifiedCountries(response.data.data);
@@ -397,8 +401,8 @@ const Signupdetail = ({ route }) => {
   const fetchCourses = async () => {
     try {
       setLoadingCourses(true);
-      const res = await axios.get(
-        'https://fornix-medical.vercel.app/api/v1/mobile/courses'
+      const res = await API.get(
+        '/mobile/courses'
       );
 
       if (res.data.success) {
@@ -454,10 +458,10 @@ const Signupdetail = ({ route }) => {
 
     // ✅ AsyncStorage me save
     await AsyncStorage.setItem(
-      'selected_course',
+      'selectedCourse', // Fixed key from 'selected_course'
       JSON.stringify({
-        id: course.id,
-        name: course.name,
+        courseId: course.id, // Fixed property: courseId instead of id
+        courseName: course.name, // Fixed property: courseName instead of name
       })
     );
   };
@@ -583,6 +587,13 @@ const Signupdetail = ({ route }) => {
   const handleNext = async (data) => {
     console.log("errorororor", errors)
     if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    const currentGender = getValues("gender");
+    if (!currentGender) {
+      setErrorFields(prev => ({ ...prev, gender: true }));
+      setErrorMessages(prev => ({ ...prev, gender: "Gender is required" }));
       return;
     }
 
@@ -988,7 +999,7 @@ const Signupdetail = ({ route }) => {
                   style={[
                     styles.genderOption,
                     gender === option && styles.genderOptionSelected,
-                    errors.gender && styles.genderError,
+                    errorFields.gender && styles.genderError,
                   ]}
                   onPress={() => {
                     setGender(option)
@@ -1432,7 +1443,23 @@ const PlanCard = ({ plan, isTablet, isLandscape, screenWidth, data }) => {
           Buy Now
         </Text>
       </TouchableOpacity>
-    </View>
+
+
+      {/* Progress Modal */}
+      <Modal
+        visible={processingPayment}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#F87F16" />
+            <Text style={styles.loadingText}>Processing...</Text>
+          </View>
+        </View>
+      </Modal>
+
+    </View >
   );
 };
 
@@ -1910,12 +1937,12 @@ const styles = StyleSheet.create({
 
   freeButton: {
     width: '70%',           // ✅ responsive
-    height: 48,             // ❌ % height hatao
+    height: 48,
     backgroundColor: '#000',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,           // Android shadow
+    elevation: 4,
   },
 
   freeButtonText: {
@@ -1923,7 +1950,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Poppins-SemiBold',
   },
-
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#1A3848',
+    fontWeight: '600',
+  },
 });
 
 export default Signupdetail;

@@ -15,6 +15,8 @@ import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
+import API from '../API/axiosConfig';
+
 const { width } = Dimensions.get('window');
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{6,}$/;
@@ -63,23 +65,20 @@ const LoginDetail = () => {
     }
 
     try {
-      const response = await fetch('https://fornix-medical.vercel.app/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          identifier: email,
-          password: password,
-        }),
+      const response = await API.post('/auth/login', {
+        identifier: email,
+        password: password,
       });
 
-      const data = await response.json();
-      console.log(data);
+      const data = response.data;
+      console.log("LOGIN RESPONSE", data);
 
       if (data.success) {
 
         await AsyncStorage.setItem("token", data.token);
 
         await AsyncStorage.setItem("user_id", data.user.id);
+        await AsyncStorage.setItem("user_data", JSON.stringify(data.user));
 
         // await fetchAndSaveSubjects(data.token)
         console.log("TOKEN SAVED", data.token);
@@ -111,8 +110,10 @@ const LoginDetail = () => {
       }
 
     } catch (error) {
-      console.log("LOGIN ERROR", error)
-      Alert.alert('Error', 'Something went wrong. Try later.');
+      console.log("LOGIN ERROR", error.response?.data || error.message);
+      const errorData = error.response?.data;
+      const errorMsg = errorData?.error || errorData?.message || 'Network error. Please try again.';
+      Alert.alert('Error', errorMsg);
     }
   };
 
@@ -192,7 +193,14 @@ const LoginDetail = () => {
         </TouchableOpacity>
 
         {/* Cancel Button */}
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        {/* Cancel Button */}
+        <TouchableOpacity onPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.replace('Signup');
+          }
+        }}>
           <Text style={styles.canceltext}>Cancel</Text>
         </TouchableOpacity>
       </ScrollView>

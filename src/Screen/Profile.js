@@ -65,18 +65,18 @@ const Profile = () => {
     //   onPress: () => navigation.navigate('Results')
     // },
 
-    {
-      id: '3',
-      title: 'Portfolio',
-      icon: 'briefcase',
-      onPress: () => navigation.navigate('Portfolio')
-    },
-    {
-      id: '4',
-      title: 'Chances To Pass',
-      icon: 'chart-line',
-      onPress: () => navigation.navigate('ChancesToPass')
-    },
+    // {
+    //   id: '3',
+    //   title: 'Portfolio',
+    //   icon: 'briefcase',
+    //   onPress: () => navigation.navigate('Portfolio')
+    // },
+    // {
+    //   id: '4',
+    //   title: 'Chances To Pass',
+    //   icon: 'chart-line',
+    //   onPress: () => navigation.navigate('ChancesToPass')
+    // },
     {
       id: '5',
       title: 'History',
@@ -89,12 +89,12 @@ const Profile = () => {
       icon: 'refresh',
       onPress: () => showResetConfirmation()
     },
-    {
-      id: '7',
-      title: 'Refer',
-      icon: 'user-plus',
-      onPress: () => navigation.navigate('Refer')
-    },
+    // {
+    //   id: '7',
+    //   title: 'Refer',
+    //   icon: 'user-plus',
+    //   onPress: () => navigation.navigate('Refer')
+    // },
 
     {
       id: '8',
@@ -303,31 +303,42 @@ const Profile = () => {
 
   const deleteAccount = async () => {
     try {
+      console.log("--- DELETE ACCOUNT FLOW STARTED ---");
       const token = await AsyncStorage.getItem("token");
       const userId = await AsyncStorage.getItem("user_id");
 
+      console.log("Retrieved Auth Data:", { userId, tokenExists: !!token });
+
       if (!token || !userId) {
+        console.log("Missing token or userId. Aborting.");
         Alert.alert("Session Expired", "Please login again");
         navigation.replace("Logindetail");
         return;
       }
 
       setLoading(true);
+      const requestConfig = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: {
+          id: userId,
+        },
+      };
+
+      console.log("Sending DELETE request to: https://fornix-medical.vercel.app/api/v1/user/delete");
+      console.log("Request Config:", JSON.stringify(requestConfig, null, 2));
+
       const response = await axios.delete(
         "https://fornix-medical.vercel.app/api/v1/user/delete",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          data: {
-            id: userId,
-          },
-        }
+        requestConfig
       );
 
-      console.log("DELETE ACCOUNT RESPONSE:", response.data);
+      console.log("DELETE ACCOUNT API RESPONSE STATUS:", response.status);
+      console.log("DELETE ACCOUNT API RESPONSE DATA:", JSON.stringify(response.data, null, 2));
 
       if (response.data?.success) {
+        console.log("Account deletion successful. Clearing storage and navigating.");
         Alert.alert("Success", "Account deleted successfully.");
         await AsyncStorage.clear();
         navigation.reset({
@@ -335,13 +346,26 @@ const Profile = () => {
           routes: [{ name: "Logindetail" }],
         });
       } else {
+        console.log("Account deletion failed (API success=false). Message:", response.data?.message);
         Alert.alert("Error", response.data?.message || "Failed to delete account");
       }
     } catch (error) {
-      console.log("DELETE ACCOUNT ERROR", error.response?.data || error.message);
+      console.log("--- DELETE ACCOUNT ERROR ---");
+      if (error.response) {
+        console.log("Error Data:", error.response.data);
+        console.log("Error Status:", error.response.status);
+        console.log("Error Headers:", error.response.headers);
+      } else if (error.request) {
+        console.log("Error Request (No Response):", error.request);
+      } else {
+        console.log("Error Message:", error.message);
+      }
+      console.log("Full Error Object:", error);
+
       Alert.alert("Error", "Failed to delete account");
     } finally {
       setLoading(false);
+      console.log("--- DELETE ACCOUNT FLOW ENDED ---");
     }
   };
 

@@ -229,6 +229,11 @@ function RootNavigation() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
+          name="CourseSunscription"
+          component={CourseSunscription}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name='TestAndDiscussion'
           component={TestAndDiscussion}
           options={{ headerShown: false }}

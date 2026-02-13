@@ -1,10 +1,12 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "", // change with your backend URL
-  timeout: 5000,
+  baseURL: "https://fornix-medical.vercel.app/api/v1",
+  timeout: 15000,
   headers: {
     "Content-Type": "application/json",
+    "Accept": "application/json",
+    "User-Agent": "Fornix-Android-App",
   },
 });
 

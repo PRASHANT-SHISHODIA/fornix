@@ -16,12 +16,11 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
-import axios from 'axios';
+import API from '../API/axiosConfig';
 
 const { width, height } = Dimensions.get('window');
 
 /* -------------------- CONSTANTS -------------------- */
-const API_BASE_URL = 'https://fornix-medical.vercel.app/api/v1/chat';
 const USER_ID = '00c764c6-2dc0-4e13-a41b-2e3dcd32f471';
 const COURSE_NAME = 'AMC';
 const STORAGE_KEY = 'ai_chat_session_id';
@@ -84,8 +83,8 @@ const AiBot = () => {
   const fetchSessions = async () => {
     setLoadingSessions(true);
     try {
-      const { data } = await axios.get(
-        `${API_BASE_URL}/sessions`,
+      const { data } = await API.get(
+        '/chat/sessions',
         { params: { user_id: USER_ID } }
       );
       if (data.success) setSessions(data.sessions);
@@ -99,8 +98,8 @@ const AiBot = () => {
   const loadSessionMessages = async id => {
     setLoading(true);
     try {
-      const { data } = await axios.get(
-        `${API_BASE_URL}/sessions/${id}`
+      const { data } = await API.get(
+        `/chat/sessions/${id}`
       );
 
       if (data.success) {
@@ -150,8 +149,8 @@ const AiBot = () => {
     setLoading(true);
 
     try {
-      const { data } = await axios.post(
-        `${API_BASE_URL}/send`,
+      const { data } = await API.post(
+        '/chat/send',
         {
           user_id: USER_ID,
           course_name: COURSE_NAME,

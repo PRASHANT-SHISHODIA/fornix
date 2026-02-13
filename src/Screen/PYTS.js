@@ -131,6 +131,12 @@ const PYTsScreen = () => {
         <StatusBar backgroundColor="#F5F5F5" barStyle="dark-content" />
         <View style={styles.header}>
           <View style={styles.searchContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.headerBackButton}
+            >
+              <Icon1 name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
             <View style={styles.searchInputContainer}>
               <Icon1 name="search" size={20} color="white" />
               <TextInput
@@ -184,6 +190,12 @@ const PYTsScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.searchContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.headerBackButton}
+            >
+              <Icon1 name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
             <View style={styles.searchInputContainer}>
               <Icon1 name="search" size={20} color="white" />
               <TextInput
@@ -276,6 +288,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale(getResponsiveSize(50)),
     paddingTop: verticalScale(getResponsiveSize(40)),
     transform: [{ scaleX: getSearchTransform() }],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(10),
+  },
+  headerBackButton: {
+    marginRight: scale(5),
   },
 
   searchInputContainer: {
@@ -284,6 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A3848',
     borderRadius: moderateScale(22),
     paddingHorizontal: scale(15),
+    flex: 1,
   },
 
   searchInput: {

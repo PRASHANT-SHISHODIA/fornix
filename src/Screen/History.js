@@ -12,11 +12,11 @@ import {
   Animated,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Icon1 from 'react-native-vector-icons/Ionicons';
+import API from '../API/axiosConfig';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/FontAwesome5'; // Also missing?
+import Icon1 from 'react-native-vector-icons/Ionicons'; // Also missing?
 
 // Screen dimensions
 const { width, height } = Dimensions.get('window');
@@ -55,7 +55,7 @@ const History = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
-  
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [historyData, setHistoryData] = useState([]);
@@ -95,8 +95,8 @@ const History = () => {
         return;
       }
 
-      const response = await axios.post(
-        'https://fornix-medical.vercel.app/api/v1/quiz-history',
+      const response = await API.post(
+        '/quiz-history',
         {
           user_id: userId,
         }
@@ -104,7 +104,7 @@ const History = () => {
 
       if (response.data.success) {
         // Sort by most recent first
-        const sortedData = response.data.data.sort((a, b) => 
+        const sortedData = response.data.data.sort((a, b) =>
           new Date(b.started_at) - new Date(a.started_at)
         );
         setHistoryData(sortedData);
@@ -132,13 +132,13 @@ const History = () => {
   };
 
   const formatTimeTaken = (seconds) => {
-  const time = Number(seconds);
-  if (!time || isNaN(time)) return 'N/A';
+    const time = Number(seconds);
+    if (!time || isNaN(time)) return 'N/A';
 
-  const minutes = Math.floor(time / 60);
-  const remainingSeconds = time % 60;
-  return `${minutes}m ${remainingSeconds}s`;
-};
+    const minutes = Math.floor(time / 60);
+    const remainingSeconds = time % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
 
 
   const formatDate = (dateString) => {
@@ -162,12 +162,12 @@ const History = () => {
     }
   };
 
-   
+
   const renderHistoryItem = (item, index) => {
     const scoreColor = getScoreColor(item.score) || 0;
     const totalQuestions = Number(item.total_questions) || 0;
-   const correctAnswers = Number( item.correct_answers) || 0;
-    const accuracy = totalQuestions > 0 
+    const correctAnswers = Number(item.correct_answers) || 0;
+    const accuracy = totalQuestions > 0
       ? Math.round((correctAnswers / totalQuestions) * 100)
       : 0;
 
@@ -285,7 +285,7 @@ const History = () => {
             tintColor="#2196F3"
           />
         }>
-        
+
         {/* 🔹 Header - Same as original */}
         <View style={styles.header}>
           <View style={styles.searchContainer}>

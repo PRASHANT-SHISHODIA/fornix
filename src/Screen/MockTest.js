@@ -209,6 +209,12 @@ const MockTest = ({ navigation }) => {
         {/* Header - Same as PYT screen */}
         <View style={styles.header}>
           <View style={styles.searchContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.headerBackButton}
+            >
+              <Icon1 name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
             <View style={styles.searchInputContainer}>
               <Icon1
                 name="search"
@@ -248,6 +254,12 @@ const MockTest = ({ navigation }) => {
         {/* Header - Same as PYT screen */}
         <View style={styles.header}>
           <View style={styles.searchContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.headerBackButton}
+            >
+              <Icon1 name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
             <View style={styles.searchInputContainer}>
               <Icon1
                 name="search"
@@ -430,6 +442,12 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(getResponsiveSize(20)),
     transform: [{ scaleX: getSearchTransform() }],
     paddingTop: verticalScale(getResponsiveSize(40)),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(10),
+  },
+  headerBackButton: {
+    marginRight: scale(5),
   },
   searchInputContainer: {
     flexDirection: 'row',
@@ -438,6 +456,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(getResponsiveSize(22)),
     paddingHorizontal: scale(getResponsiveSize(15)),
     paddingVertical: verticalScale(getResponsiveSize(3)),
+    flex: 1,
   },
   searchIcon: {
     marginRight: scale(getResponsiveSize(10)),

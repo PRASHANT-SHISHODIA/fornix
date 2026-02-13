@@ -9,12 +9,14 @@ import {
   StatusBar,
   TextInput,
   Animated,
+  FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon1 from 'react-native-vector-icons/Ionicons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 // Screen width and height
 const { width, height } = Dimensions.get('window');
@@ -53,17 +55,47 @@ const BasicPlan = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [subscriptions, setSubscriptions] = useState([]);
 
-  useEffect(() => {
-    const loadCourse = async () => {
-      const courseData = await AsyncStorage.getItem('selectedCourse')
-      if (courseData) {
-        const parsed = JSON.parse(courseData);
-        setSelectedCourse(parsed);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [])
+  );
+
+  const loadData = async () => {
+    await loadCourse();
+    await fetchSubscriptions();
+  };
+
+  const loadCourse = async () => {
+    const courseData = await AsyncStorage.getItem('selectedCourse');
+    if (courseData) {
+      const parsed = JSON.parse(courseData);
+      setSelectedCourse(parsed);
+    }
+  };
+
+  const fetchSubscriptions = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const userId = await AsyncStorage.getItem("user_id");
+
+      if (!token || !userId) return;
+
+      const response = await axios.post(
+        "https://fornix-medical.vercel.app/api/v1/user/get",
+        { id: userId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data?.success) {
+        setSubscriptions(response.data.subscriptions || []);
       }
-    };
-    loadCourse();
-  }, []);
+    } catch (error) {
+      console.log("Error fetching subscriptions:", error);
+    }
+  };
 
 
 
@@ -175,40 +207,48 @@ const BasicPlan = () => {
         </View>
 
         {/* Features Grid */}
-        <View style={styles.featuresGrid}>
-          {features.map(feature => (
-            <View key={feature.id} style={styles.featureItem}>
+        <FlatList
+          data={features}
+          keyExtractor={item => item.id}
+          numColumns={3}
+          scrollEnabled={false}
+          contentContainerStyle={styles.featuresGrid}
+          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          renderItem={({ item }) => (
+            <View style={styles.featureItem}>
               <TouchableOpacity
                 style={styles.featureCard}
-                onPress={feature.onPress}>
+                onPress={item.onPress}>
                 <View style={styles.featureIconContainer}>
                   <Icon
-                    name={feature.icon}
+                    name={item.icon}
                     size={moderateScale(getResponsiveSize(22))}
                     color="#1A3848"
                   />
                 </View>
               </TouchableOpacity>
-              <Text style={styles.featureTitle}>{feature.title}</Text>
+              <Text style={styles.featureTitle}>{item.title}</Text>
             </View>
-          ))}
-        </View>
+          )}
+        />
       </ScrollView>
-      <Animated.View
-        style={[
-          styles.upgradeButton,
-          { backgroundColor }
-        ]}
-      >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={()=> navigation.navigate("Signupdetail", {params: {direct: true}})}
-          style={styles.upgradeButtonInner}
+      {subscriptions.length === 0 && (
+        <Animated.View
+          style={[
+            styles.upgradeButton,
+            { backgroundColor }
+          ]}
         >
-          <Icon name="crown" size={16} color="#fff" />
-          <Text style={styles.upgradeButtonText}>Buy Plan</Text>
-        </TouchableOpacity>
-      </Animated.View>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate("CourseSunscription", { params: { course: selectedCourse } })}
+            style={styles.upgradeButtonInner}
+          >
+            <Icon name="crown" size={16} color="#fff" />
+            <Text style={styles.upgradeButtonText}>Buy Plan</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </View>
   );
 };
@@ -259,14 +299,11 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   featuresGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
     paddingHorizontal: scale(getResponsiveSize(30)),
     marginBottom: verticalScale(getResponsiveSize(30)),
   },
   featureItem: {
-    width: (width - scale(getResponsiveSize(60))) / 4,
+    width: (width - scale(getResponsiveSize(60))) / 3.2,
     alignItems: 'center',
     marginBottom: verticalScale(getResponsiveSize(25)),
   },
