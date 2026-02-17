@@ -81,13 +81,25 @@ const Qbanksubject = () => {
     const loadCourse = async () => {
       try {
         const courseData = await AsyncStorage.getItem('selectedCourse');
+        let courseObj = null;
+
         if (courseData) {
-          const parsed = JSON.parse(courseData);
-          setSelectedCourse(parsed);
-          console.log('COURSE FROM STORAGE 👉', parsed);
+          courseObj = JSON.parse(courseData);
+        } else if (route.params?.courseId || route.params?.Course) {
+          // Fallback to route params
+          courseObj = {
+            courseId: route.params.courseId || route.params.Course,
+            courseName: route.params.courseName || 'Selected Course',
+          };
+        }
+
+        if (courseObj) {
+          setSelectedCourse(courseObj);
+          console.log('Course loaded:', courseObj);
+          getSubjectsByCourse(courseObj.courseId || courseObj.id);
         }
       } catch (e) {
-        console.log('ERROR LOADING COURSE', e);
+        console.log('Error loading course:', e);
       }
     };
 
@@ -359,15 +371,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featureIconContainer: {
-    width: scale(getResponsiveSize(60)),
-    height: scale(getResponsiveSize(60)),
-    borderRadius: scale(getResponsiveSize(60)),
-    backgroundColor: '#F0F4F8',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#F87F16',
-    marginLeft: scale(getResponsiveSize(-25)),
+    marginLeft: scale(getResponsiveSize(10)),
   },
   textContainer: {
     flex: 1,

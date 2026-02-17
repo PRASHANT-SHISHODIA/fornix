@@ -101,13 +101,13 @@ const Editprofile = () => { // Removed props
         return;
       }
 
-      const response = await API.post( // Used API instance and relative URL
+      const response = await API.put( // Used API instance and relative URL
         "/user/update",
         {
           id: userId,
           full_name: userData.full_name,
-          phone: userData.phone, // Added phone
-          email: userData.email, // Added email
+          phone: userData.phone,
+          email: userData.email,
           gender: userData.gender,
         },
         {
@@ -126,7 +126,7 @@ const Editprofile = () => { // Removed props
       }
 
     } catch (error) {
-      Alert.alert("Error", "Update failed");
+      Alert.alert("Error", error.response?.data.message || "Failed to update profile");
       console.log("API ERROR ", error.response?.data || error.message);
     } finally {
       setLoading(false);

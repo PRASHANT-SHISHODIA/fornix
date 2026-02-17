@@ -29,7 +29,7 @@ import RazorpayCheckout from 'react-native-razorpay';
 const { width } = Dimensions.get('window');
 
 const API_URL = 'https://fornix-medical.vercel.app/api/v1/mobile/courses';
-const RAZORPAY_KEY = 'rzp_test_4U2LJWfsmsYINp';
+const RAZORPAY_KEY = 'rzp_live_SFWxjzUjAY5PC6';
 
 // Original country data (for phone codes only)
 const countries = [

@@ -206,7 +206,7 @@ const Fornixqbank2 = () => {
 
 
   const getAttemptedCount = () => {
-    
+
     return userAnswers.length;
   };
 
@@ -304,13 +304,13 @@ const Fornixqbank2 = () => {
   };
 
   useEffect(() => {
-  const getUserId = async () => {
-    const storedUserId = await AsyncStorage.getItem('user_id');
-    setUserId(storedUserId);
-  };
+    const getUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('user_id');
+      setUserId(storedUserId);
+    };
 
-  getUserId();
-}, []);
+    getUserId();
+  }, []);
 
 
   const callTopicQuizApi = async () => {
@@ -347,7 +347,7 @@ const Fornixqbank2 = () => {
   };
 
   useEffect(() => {
-   
+
 
     // ✅ SUBJECT (AMC) FLOW
     if (mood && subjectId) {
@@ -460,7 +460,7 @@ const Fornixqbank2 = () => {
     };
 
     setUserAnswers(prev => [...prev, answerRecord]);
-    
+
 
     if (isCorrect) {
       setScore(prev => prev + 1);
@@ -493,7 +493,7 @@ const Fornixqbank2 = () => {
     }
 
   };
-  
+
 
   const getTimeTakenInSeconds = () => {
     if (!quizStartTime) return 0;
@@ -520,25 +520,25 @@ const Fornixqbank2 = () => {
   //     useNativeDriver: false,
   //   }).start();
   // }
-  
 
-const startSubmitProgress = () => {
-  submitProgress.setValue(0);
-  setSubmitPercent(0);
 
-  submitProgress.addListener(({ value }) => {
-    const percent = Math.round(value * 100);
-    setSubmitPercent(percent); // ❌ triggers render ~60 times/sec
-  });
+  const startSubmitProgress = () => {
+    submitProgress.setValue(0);
+    setSubmitPercent(0);
 
-  Animated.timing(submitProgress, {
-    toValue: 1,
-    duration: 1800,
-    useNativeDriver: false,
-  }).start(() => {
-    submitProgress.removeAllListeners();
-  });
-};
+    submitProgress.addListener(({ value }) => {
+      const percent = Math.round(value * 100);
+      setSubmitPercent(percent); // ❌ triggers render ~60 times/sec
+    });
+
+    Animated.timing(submitProgress, {
+      toValue: 1,
+      duration: 1800,
+      useNativeDriver: false,
+    }).start(() => {
+      submitProgress.removeAllListeners();
+    });
+  };
 
 
   console.log("USER ANSWERS", userAnswers)
@@ -900,16 +900,17 @@ const startSubmitProgress = () => {
 
       {openTracker && (
         <View style={styles.trackerContainer}>
-            {questions?.map((question, index)=>(
-                <TouchableOpacity style={{...styles.questionContain,
-                  backgroundColor: index === currentIndex ? '#F87F16' : (getAnswer(question.id)?.selected_key ? '#4CAF50' : '#E0E0E0')
-                }} onPress={()=> {
-                  setCurrentIndex(index);
-                  setOpenTracker(false)
-                }} key={index}>
-                  <Text style={styles.questionNumber}>{index+1}</Text>
-                  </TouchableOpacity>
-            ))}
+          {questions?.map((question, index) => (
+            <TouchableOpacity style={{
+              ...styles.questionContain,
+              backgroundColor: index === currentIndex ? '#F87F16' : (getAnswer(question.id)?.selected_key ? '#4CAF50' : '#E0E0E0')
+            }} onPress={() => {
+              setCurrentIndex(index);
+              setOpenTracker(false)
+            }} key={index}>
+              <Text style={styles.questionNumber}>{index + 1}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
@@ -951,9 +952,9 @@ const startSubmitProgress = () => {
             </View>
           </View>
         </View>
-        
+
         {/* tracker */}
-        <TouchableOpacity onPress={()=>setOpenTracker(!openTracker)} style={styles.trackerButton}>
+        <TouchableOpacity onPress={() => setOpenTracker(!openTracker)} style={styles.trackerButton}>
           <Text>+</Text>
         </TouchableOpacity>
         {/* 🔹 Question Container */}
@@ -1020,21 +1021,6 @@ const startSubmitProgress = () => {
                     {option.content}
                   </Text>
                 </View>
-                {selectedOption === option.option_key && (
-                  <Icon
-                    name={
-                      option.option_key === currentQuestion.correct_answer
-                        ? 'check'
-                        : 'times'
-                    }
-                    size={moderateScale(getResponsiveSize(16))}
-                    color={
-                      option.option_key === currentQuestion.correct_answer
-                        ? '#4CAF50'
-                        : '#F44336'
-                    }
-                  />
-                )}
               </TouchableOpacity>
             ))}
           </View>
@@ -1192,8 +1178,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
 
     zIndex: 999,
-    elevation: 10, 
-    shadowColor: "#000", 
+    elevation: 10,
+    shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -1205,14 +1191,14 @@ const styles = StyleSheet.create({
     margin: 8,
 
     borderRadius: 22,
-   
+
     justifyContent: "center",
     alignItems: "center",
 
     borderWidth: 1,
     borderColor: "#ddd",
   },
-  trackerButton:{
+  trackerButton: {
     position: "absolute",
     bottom: 10,
     right: 10,
@@ -1220,10 +1206,10 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 100,
     backgroundColor: "orange",
-    padding:2,
-    display:"flex",
+    padding: 2,
+    display: "flex",
     justifyContent: "center",
-    alignItems:"center"
+    alignItems: "center"
   },
   questionContainer: {
     marginHorizontal: scale(getResponsiveSize(20)),

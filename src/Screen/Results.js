@@ -229,7 +229,7 @@ const Results = ({ route, navigation }) => {
           { fontSize: moderateScale(getResponsiveSize(16)) }
         ]}>
           {quizData.avgTimePerQuestion}
-        </Text>+-
+        </Text>
       </View>
     </View>
   );

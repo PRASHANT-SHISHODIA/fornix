@@ -44,6 +44,7 @@ const Quizpage = () => {
 
   /* ---------- States ---------- */
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [attemptId, setAttemptId] = useState(null);
 
@@ -101,7 +102,7 @@ const Quizpage = () => {
   };
 
   /* ---------- Timer ---------- */
- 
+
   useEffect(() => {
     if (timeLeft > 0) {
       timerRef.current = setTimeout(() => {
@@ -164,6 +165,7 @@ const Quizpage = () => {
   /* ---------- Submit ---------- */
   const handleSubmit = async () => {
     try {
+      setSubmitting(true);
       const userId = await AsyncStorage.getItem('user_id');
 
       if (!userId) {
@@ -197,15 +199,20 @@ const Quizpage = () => {
     } catch (error) {
       console.log("SUBMIT ERROR", error?.response || error);
       Alert.alert("Error", 'Something went wrong while Submitting quiz');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  /* ---------- Loading ---------- */
-  if (loading) {
+  /* ---------- Loading / Submitting States ---------- */
+  if (loading || submitting) {
     return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#fff" />
-        {/* <Text style={{alignContent:'center',}}>MockTest .....</Text> */}
+      <View style={styles.loaderContainer}>
+        <StatusBar backgroundColor="#F87F16" barStyle="light-content" />
+        <ActivityIndicator size="large" color="#F87F16" />
+        <Text style={styles.loaderText}>
+          {submitting ? 'Submitting your results...' : 'Loading mock test...'}
+        </Text>
       </View>
     );
   }
@@ -375,6 +382,18 @@ const styles = StyleSheet.create({
   navButtonText: {
     color: '#000',
     fontFamily: 'Poppins-SemiBold',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+  },
+  loaderText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#1A3848',
+    fontFamily: 'Poppins-Medium',
   },
 });
 

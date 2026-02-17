@@ -20,7 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import RazorpayCheckout from 'react-native-razorpay';
 import API from '../API/axiosConfig';
 
-const RAZORPAY_KEY = 'rzp_test_4U2LJWfsmsYINp'; // Replace with your actual key
+const RAZORPAY_KEY = 'rzp_live_SFWxjzUjAY5PC6'; // Replace with your actual key
 
 const PlansScreen = () => {
   const navigation = useNavigation();

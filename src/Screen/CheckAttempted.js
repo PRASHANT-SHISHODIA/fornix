@@ -449,7 +449,7 @@ const CheckAttempted = ({ route, navigation }) => {
           <Icon
             name={isOpen ? 'chevron-up' : 'chevron-down'}
             size={14}
-            // color="#555"
+          // color="#555"
           />
         </TouchableOpacity>
 
@@ -670,7 +670,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
-    borderLeftWidth: 4,
     elevation: 2,
   },
   cardHeader: {

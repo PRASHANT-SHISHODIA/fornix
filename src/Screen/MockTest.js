@@ -42,7 +42,7 @@ const getSearchTransform = () => {
   return 0.58;
 };
 
-const MockTest = ({ navigation }) => {
+const MockTest = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   const [mockTests, setMockTests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,25 +61,27 @@ const MockTest = ({ navigation }) => {
     try {
       const storedUserId = await AsyncStorage.getItem('user_id');
       const courseData = await AsyncStorage.getItem('selectedCourse');
-      console.log("stor", storedUserId)
-      console.log('courseData', courseData)
+      let currentCourseId = null;
 
+      if (courseData) {
+        const course = JSON.parse(courseData);
+        currentCourseId = course.courseId || course.id;
+      } else if (route.params?.courseId || route.params?.Course) {
+        currentCourseId = route.params.courseId || route.params.Course;
+      }
 
       if (!storedUserId) {
         Alert.alert('Error', 'User not found');
         return;
       }
 
-      if (!courseData) {
+      if (!currentCourseId) {
         Alert.alert('Error', 'Course not found');
         return;
       }
 
-      const course = JSON.parse(courseData);
       setUserId(storedUserId);
-      setCourseId(course.courseId);
-      console.log('couser', course)
-      console.log("setCouserId", courseId)
+      setCourseId(currentCourseId);
 
     } catch (err) {
       console.log('Mock tests API error:', error);
@@ -235,7 +237,7 @@ const MockTest = ({ navigation }) => {
         </View>
 
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1A3848" />
+          <ActivityIndicator size="large" color="#F87F16" />
           <Text style={styles.loadingText}>Loading mock tests...</Text>
         </View>
       </View>

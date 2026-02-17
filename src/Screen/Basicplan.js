@@ -107,6 +107,8 @@ const BasicPlan = () => {
       icon: 'question-circle',
       description: 'Access question bank',
       onPress: () => navigation.navigate('Qbanksubject'),
+      bgColor: '#E3F2FD',
+      iconColor: '#1976D2',
     },
     selectedCourse?.courseName?.includes('AMC')
       ? {
@@ -115,6 +117,8 @@ const BasicPlan = () => {
         icon: 'file-alt',
         description: 'Previous year questions',
         onPress: () => navigation.navigate('PYTS'),
+        bgColor: '#FFF3E0',
+        iconColor: '#F57C00',
       }
       : {
         id: '2',
@@ -122,6 +126,8 @@ const BasicPlan = () => {
         icon: 'file-alt',
         description: 'Previous year questions',
         onPress: () => navigation.navigate('PYQs'),
+        bgColor: '#FFF3E0',
+        iconColor: '#F57C00',
       },
     {
       id: '3',
@@ -129,6 +135,8 @@ const BasicPlan = () => {
       icon: 'clipboard-list',
       description: 'Take mock tests',
       onPress: () => navigation.navigate('MockTest'),
+      bgColor: '#E8F5E9',
+      iconColor: '#388E3C',
     },
     {
       id: '4',
@@ -136,6 +144,8 @@ const BasicPlan = () => {
       icon: 'chart-bar',
       description: 'Performance analysis',
       onPress: () => navigation.navigate('AnalysisScreen'),
+      bgColor: '#F3E5F5',
+      iconColor: '#7B1FA2',
     },
     {
       id: '5',
@@ -143,12 +153,25 @@ const BasicPlan = () => {
       icon: 'sticky-note',
       description: 'Study notes',
       onPress: () => navigation.navigate('Notes'),
+      bgColor: '#FFFDE7',
+      iconColor: '#FBC02D',
     },
     {
       id: '6',
       title: 'Smart Tracking',
       icon: 'chart-line',
       onPress: () => navigation.navigate('SmartTracking'),
+      bgColor: '#E0F2F1',
+      iconColor: '#00796B',
+    },
+    {
+      id: '7',
+      title: 'AI Bot',
+      icon: 'robot',
+      description: 'Take mock tests',
+      onPress: () => navigation.navigate('AiBot'),
+      bgColor: '#FFEBEE',
+      iconColor: '#D32F2F',
     },
   ];
 
@@ -206,6 +229,12 @@ const BasicPlan = () => {
           </View>
         </View>
 
+        {/* Section Title */}
+        <View style={styles.sectionHeader}>
+          <Icon name="star" size={18} color="#F87F16" solid />
+          <Text style={styles.sectionTitle}>My Plan Features</Text>
+        </View>
+
         {/* Features Grid */}
         <FlatList
           data={features}
@@ -217,13 +246,14 @@ const BasicPlan = () => {
           renderItem={({ item }) => (
             <View style={styles.featureItem}>
               <TouchableOpacity
+                activeOpacity={0.7}
                 style={styles.featureCard}
                 onPress={item.onPress}>
-                <View style={styles.featureIconContainer}>
+                <View style={[styles.featureIconContainer, { backgroundColor: item.bgColor }]}>
                   <Icon
                     name={item.icon}
                     size={moderateScale(getResponsiveSize(22))}
-                    color="#1A3848"
+                    color={item.iconColor}
                   />
                 </View>
               </TouchableOpacity>
@@ -322,20 +352,40 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(getResponsiveSize(8)),
   },
   featureIconContainer: {
-    width: scale(getResponsiveSize(50)),
-    height: scale(getResponsiveSize(50)),
-    borderRadius: scale(getResponsiveSize(20)),
+    width: scale(getResponsiveSize(55)),
+    height: scale(getResponsiveSize(55)),
+    borderRadius: scale(getResponsiveSize(27.5)),
     backgroundColor: '#F0F4F8',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#F87F16',
+    // Remove border for a cleaner look
+    // borderWidth: 2,
+    // borderColor: '#F87F16',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   featureTitle: {
-    fontSize: moderateScale(getResponsiveSize(12)),
+    fontSize: moderateScale(getResponsiveSize(11)),
     fontFamily: 'Poppins-SemiBold',
     color: '#1A3848',
     textAlign: 'center',
+    includeFontPadding: false,
+    marginTop: verticalScale(getResponsiveSize(5)),
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: scale(getResponsiveSize(30)),
+    marginBottom: verticalScale(getResponsiveSize(15)),
+  },
+  sectionTitle: {
+    fontSize: moderateScale(getResponsiveSize(16)),
+    fontFamily: 'Poppins-Bold',
+    color: '#1A3848',
+    marginLeft: scale(getResponsiveSize(10)),
     includeFontPadding: false,
   },
   upgradeButton: {

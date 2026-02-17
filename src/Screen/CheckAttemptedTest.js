@@ -117,7 +117,7 @@ const CheckAttemptedTest = ({ route, navigation }) => {
 
       // Generate a unique ID - combine question_id with index if needed
       let uniqueId = `${item.question_id || 'no-id'}`;
-      
+
       // If we've seen this ID before, append index to make it unique
       if (usedIds.has(uniqueId)) {
         uniqueId = `${uniqueId}_${index}`;
@@ -131,7 +131,7 @@ const CheckAttemptedTest = ({ route, navigation }) => {
         question: item.question_text || 'No question text',
         options: item.options?.map(o => o.content) || ['No options'],
         explanation: item.explanation || 'No explanation available',
-        
+
         // ✅ FIX: Audio URLs ko API se lena
         femaleAudio: item.female_explanation_audio_url,
         maleAudio: item.male_explanation_audio_url,
@@ -196,7 +196,7 @@ const CheckAttemptedTest = ({ route, navigation }) => {
     }
 
     console.log('Playing audio:', audioUrl);
-    
+
     const sound = new Sound(audioUrl, null, (error) => {
       if (error) {
         console.log('Audio load error:', error);
@@ -259,12 +259,11 @@ const CheckAttemptedTest = ({ route, navigation }) => {
         <Icon name="arrow-left" size={18} color="#fff" />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Attempted Questions</Text>
-      <TouchableOpacity onPress={fetchAttemptDetails} disabled={loading}>
+      <TouchableOpacity onPress={() => navigation.navigate('TabNavigator', { screen: 'Home' })}>
         <Icon
-          name="sync-alt"
+          name="home"
           size={18}
           color="#fff"
-          style={loading && { opacity: 0.5 }}
         />
       </TouchableOpacity>
     </View>
@@ -379,9 +378,6 @@ const CheckAttemptedTest = ({ route, navigation }) => {
                 >
                   {item.isCorrect ? 'Correct' : 'Wrong'}
                 </Text>
-                {hasAudio && (
-                  <Icon name="volume-up" size={12} color="#1A3848" style={{ marginLeft: 8 }} />
-                )}
               </View>
             </View>
           </View>
@@ -607,7 +603,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
-    borderLeftWidth: 4,
     elevation: 2,
   },
   cardHeader: {

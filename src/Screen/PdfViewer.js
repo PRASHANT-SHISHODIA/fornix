@@ -57,6 +57,11 @@ const PdfViewer = ({ route }) => {
             meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
             document.head.appendChild(meta);
 
+            // Hide Share / Pop-out buttons
+            const style = document.createElement('style');
+            style.innerHTML = '.ndfHFb-c4SVe-L97Feb-ai7Q9c, [aria-label="Pop-out"], [title="Pop-out"], .ndfHFb-c4SVe-nS1pS-Xm7s6e, .ndfHFb-c4SVe-pInS9 { display: none !important; }';
+            document.head.appendChild(style);
+
             document.body.style.background = '#f8fafc';
             document.body.style.margin = '0';
             true;

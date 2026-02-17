@@ -33,9 +33,6 @@ const getResponsiveSize = (size) => {
 
 const MockTestResults = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
-  const [showGift, setShowGift] = useState(true);
-  const [giftAnimation] = useState(new Animated.Value(0));
-  const [scaleAnimation] = useState(new Animated.Value(0.3));
 
   const isMockTest = score === 'mocktest'
 
@@ -77,47 +74,6 @@ const MockTestResults = ({ route, navigation }) => {
 
 
 
-  useEffect(() => {
-    // Show gift popup after 1 second
-    const timer = setTimeout(() => {
-      setShowGift(true);
-      startGiftAnimation();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const startGiftAnimation = () => {
-    Animated.parallel([
-      Animated.spring(giftAnimation, {
-        toValue: 1,
-        tension: 10,
-        friction: 3,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnimation, {
-        toValue: 1,
-        tension: 10,
-        friction: 3,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const closeGift = () => {
-    Animated.parallel([
-      Animated.timing(giftAnimation, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnimation, {
-        toValue: 0.3,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start(() => setShowGift(false));
-  };
 
   const renderScoreCircle = () => {
     const circleSize = width * 0.5;
@@ -276,7 +232,7 @@ const MockTestResults = ({ route, navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.replace('TabNavigator', { screen: 'Home' })}
         >
           <Icon
             name="arrow-left"
@@ -307,7 +263,7 @@ const MockTestResults = ({ route, navigation }) => {
             styles.congratsText,
             { fontSize: moderateScale(getResponsiveSize(24)) }
           ]}>
-            ThankYou For 
+            ThankYou
           </Text>
           <Text style={[
             styles.subCongratsText,
@@ -361,72 +317,6 @@ const MockTestResults = ({ route, navigation }) => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Gift Popup Modal */}
-      <Modal
-        visible={showGift}
-        transparent
-        animationType="fade"
-        onRequestClose={closeGift}
-      >
-        <View style={styles.modalOverlay}>
-          <Animated.View style={[
-            styles.giftContainer,
-            {
-              opacity: giftAnimation,
-              transform: [
-                { scale: scaleAnimation },
-                {
-                  translateY: giftAnimation.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [50, 0]
-                  })
-                }
-              ]
-            }
-          ]}>
-            <View style={styles.giftContent}>
-              {/* Gift Box Image */}
-              <View style={styles.giftBoxContainer}>
-                {/* Confetti Animation */}
-                <View style={styles.confettiContainer}>
-                  {[...Array(8)].map((_, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.confetti,
-                        {
-                          backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3', '#F7CAC9'][i % 5],
-                          left: `${(i * 12) % 100}%`,
-                          top: i % 2 === 0 ? 10 : 60,
-                          transform: [{ rotate: `${i * 45}deg` }],
-                        }
-                      ]}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              <Text style={[
-                styles.giftTitle,
-                { fontSize: moderateScale(getResponsiveSize(22)) }
-              ]}>
-                🎉 Congratulations! 🎉
-              </Text>
-              <TouchableOpacity
-                style={styles.skipButton}
-                onPress={closeGift}
-              >
-                <Text style={[
-                  styles.skipButtonText,
-                  { fontSize: moderateScale(getResponsiveSize(14)) }
-                ]}>
-                  Skip for now
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -600,100 +490,6 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: scale(getResponsiveSize(10)),
-  },
-  // Gift Popup Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: scale(getResponsiveSize(20)),
-  },
-  giftContainer: {
-    backgroundColor: 'white',
-    borderRadius: moderateScale(getResponsiveSize(20)),
-    width: '100%',
-    maxWidth: 400,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 20,
-  },
-  giftContent: {
-    padding: scale(getResponsiveSize(25)),
-    alignItems: 'center',
-  },
-  giftBoxContainer: {
-    position: 'relative',
-    width: moderateScale(getResponsiveSize(120)),
-    height: moderateScale(getResponsiveSize(120)),
-    marginBottom: verticalScale(getResponsiveSize(20)),
-  },
-  giftImage: {
-    width: '100%',
-    height: '100%',
-  },
-  confettiContainer: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  confetti: {
-    position: 'absolute',
-    width: moderateScale(getResponsiveSize(15)),
-    height: moderateScale(getResponsiveSize(15)),
-    borderRadius: moderateScale(getResponsiveSize(2)),
-  },
-  giftTitle: {
-    fontFamily: 'Poppins-Bold',
-    color: '#1A3848',
-    textAlign: 'center',
-    marginBottom: verticalScale(getResponsiveSize(10)),
-    includeFontPadding: false,
-  },
-  giftMessage: {
-    fontFamily: 'Poppins-Medium',
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: verticalScale(getResponsiveSize(20)),
-    lineHeight: moderateScale(getResponsiveSize(24)),
-    includeFontPadding: false,
-  },
-  giftRewardContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: verticalScale(getResponsiveSize(25)),
-    gap: scale(getResponsiveSize(20)),
-  },
-  rewardBadge: {
-    alignItems: 'center',
-    backgroundColor: '#FFF9F2',
-    padding: scale(getResponsiveSize(15)),
-    borderRadius: moderateScale(getResponsiveSize(12)),
-    minWidth: scale(getResponsiveSize(100)),
-  },
-  rewardText: {
-    fontFamily: 'Poppins-SemiBold',
-    color: '#1A3848',
-    marginTop: verticalScale(getResponsiveSize(5)),
-    includeFontPadding: false,
-  },
-  claimButton: {
-    backgroundColor: '#F87F16',
-    paddingHorizontal: scale(getResponsiveSize(30)),
-    width: '100%',
-    marginBottom: verticalScale(getResponsiveSize(15)),
-  },
-  claimButtonText: {
-    fontFamily: 'Poppins-SemiBold',
-    color: 'white',
-    textAlign: 'center',
-    includeFontPadding: false,
-  },
-  skipButton: {
-    padding: scale(getResponsiveSize(10)),
   },
   skipButtonText: {
     fontFamily: 'Poppins-Medium',

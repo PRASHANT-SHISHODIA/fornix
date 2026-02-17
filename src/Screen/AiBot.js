@@ -16,14 +16,14 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import API from '../API/axiosConfig';
 
 const { width, height } = Dimensions.get('window');
 
 /* -------------------- CONSTANTS -------------------- */
-const USER_ID = '00c764c6-2dc0-4e13-a41b-2e3dcd32f471';
-const COURSE_NAME = 'AMC';
-const STORAGE_KEY = 'ai_chat_session_id';
+
 
 /* -------------------- HELPERS -------------------- */
 const generateId = () =>
@@ -46,6 +46,7 @@ const formatDate = date =>
 
 /* -------------------- MAIN COMPONENT -------------------- */
 const AiBot = () => {
+  const navigation = useNavigation();
   const flatListRef = useRef(null);
 
   const [messages, setMessages] = useState([
@@ -64,15 +65,27 @@ const AiBot = () => {
   const [sessions, setSessions] = useState([]);
   const [showSessionsModal, setShowSessionsModal] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [userId, setUserId] = useState(null);
 
+
+
+  const USER_ID = userId
+  const COURSE_NAME = 'AMC';
+  const STORAGE_KEY = 'ai_chat_session_id';
   /* -------------------- EFFECTS -------------------- */
+
   useEffect(() => {
-    loadSavedSession();
+    console.log(userId)
+    console.log(loadSavedSession());
   }, []);
 
   const loadSavedSession = async () => {
-    const savedId = await AsyncStorage.getItem(STORAGE_KEY);
-    if (savedId) setSessionId(savedId);
+    const [savedSessionId, savedUserId] = await Promise.all([
+      AsyncStorage.getItem(STORAGE_KEY),
+      AsyncStorage.getItem('user_id'),
+    ]);
+    if (savedSessionId) setSessionId(savedSessionId);
+    if (savedUserId) setUserId(savedUserId);
   };
 
   const saveSessionId = async id => {
@@ -83,9 +96,14 @@ const AiBot = () => {
   const fetchSessions = async () => {
     setLoadingSessions(true);
     try {
+      const currentUserId = userId || (await AsyncStorage.getItem('user_id'));
+      if (!currentUserId) {
+        Alert.alert('Error', 'User ID not found. Please log in again.');
+        return;
+      }
       const { data } = await API.get(
         '/chat/sessions',
-        { params: { user_id: USER_ID } }
+        { params: { user_id: currentUserId } }
       );
       if (data.success) setSessions(data.sessions);
     } catch (e) {
@@ -114,13 +132,13 @@ const AiBot = () => {
           formatted.length
             ? formatted
             : [
-                {
-                  id: generateId(),
-                  text: "Hello! I'm your AI assistant. How can I help you today?",
-                  isUser: false,
-                  timestamp: new Date(),
-                },
-              ]
+              {
+                id: generateId(),
+                text: "Hello! I'm your AI assistant. How can I help you today?",
+                isUser: false,
+                timestamp: new Date(),
+              },
+            ]
         );
 
         setSessionId(id);
@@ -149,10 +167,17 @@ const AiBot = () => {
     setLoading(true);
 
     try {
+      const currentUserId = userId || (await AsyncStorage.getItem('user_id'));
+      if (!currentUserId) {
+        Alert.alert('Error', 'User ID not found. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
       const { data } = await API.post(
         '/chat/send',
         {
-          user_id: USER_ID,
+          user_id: currentUserId,
           course_name: COURSE_NAME,
           query: userMessage.text,
           session_id: sessionId,
@@ -253,10 +278,13 @@ const AiBot = () => {
       <SafeAreaView style={{ flex: 1 }}>
         {/* HEADER */}
         <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>AI Assistant</Text>
-          <View style={{ flexDirection: 'row' }}>
+          <View style={styles.headerActions}>
             <TouchableOpacity onPress={() => { fetchSessions(); setShowSessionsModal(true); }}>
-              <Text style={styles.headerIcon}>💾</Text>
+              <Text style={styles.headerIcon}>⌚</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={clearChat}>
               <Text style={styles.headerIcon}>🗑️</Text>
@@ -331,17 +359,28 @@ const AiBot = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    padding: 16,
+    padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems:'center',
+    alignItems: 'center',
+    marginTop: 10
   },
   headerTitle: {
     color: '#fff',
     fontSize: 22,
     fontWeight: 'bold',
-    alignSelf:'center',
-    left:"27%"
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 80, // Approximate width to balance back button
+    justifyContent: 'flex-end',
+  },
+  backButton: {
+    width: 80,
+    justifyContent: 'center',
   },
   headerIcon: {
     fontSize: 22,

@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import useUserStore from '../store/useUserStore';
 
 
 const { width, height } = Dimensions.get('window');
@@ -139,6 +140,11 @@ const Profile = () => {
       setProfileData(response?.data?.user)
       setSubscriptions(response?.data?.subscriptions || [])
 
+      // Update global store
+      if (response?.data?.user?.profile_picture) {
+        useUserStore.getState().setProfilePicture(response.data.user.profile_picture);
+      }
+
       // console.log(profileData)
 
     } catch (error) {
@@ -231,6 +237,7 @@ const Profile = () => {
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("user_id");
       await AsyncStorage.removeItem("user");
+      useUserStore.getState().clearUser();
       navigation.reset({
         index: 0,
         routes: [{ name: "Logindetail" }],
@@ -341,6 +348,7 @@ const Profile = () => {
         console.log("Account deletion successful. Clearing storage and navigating.");
         Alert.alert("Success", "Account deleted successfully.");
         await AsyncStorage.clear();
+        useUserStore.getState().clearUser();
         navigation.reset({
           index: 0,
           routes: [{ name: "Logindetail" }],

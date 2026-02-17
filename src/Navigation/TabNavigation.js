@@ -1,6 +1,7 @@
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import {SafeAreaProvider, useSafeAreaInsets} from 'react-native-safe-area-context';
+import { Image } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Icon1 from 'react-native-vector-icons/FontAwesome';
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -11,6 +12,7 @@ import Basicplan from '../Screen/Basicplan';
 import Premiumplan from '../Screen/Premiumplan';
 import AIscreen from '../Screen/AIscreen';
 import Profile from '../Screen/Profile';
+import useUserStore from '../store/useUserStore';
 
 const TabNavigatorContent = () => {
   const TabNav = createBottomTabNavigator();
@@ -45,7 +47,7 @@ const TabNavigatorContent = () => {
         name="Home"
         component={Home}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <Icon
               name="home-sharp"
               size={22}
@@ -58,7 +60,7 @@ const TabNavigatorContent = () => {
         name="My Plan"
         component={Basicplan}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <Icon
               name="star-outline"
               size={22.5}
@@ -99,13 +101,32 @@ const TabNavigatorContent = () => {
         component={Profile}
         initialParams={{ selectedCountry: null }}
         options={{
-          tabBarIcon: ({focused}) => (
-            <Icon2
-              name="account"
-              size={30}
-              color={focused ? '#F87F16' : 'white'}
-            />
-          ),
+          tabBarIcon: ({ focused }) => {
+            const profilePicture = useUserStore(state => state.profilePicture);
+
+            if (profilePicture) {
+              return (
+                <Image
+                  source={{ uri: profilePicture }}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 13,
+                    borderWidth: focused ? 1.5 : 0,
+                    borderColor: '#F87F16',
+                  }}
+                />
+              );
+            }
+
+            return (
+              <Icon2
+                name="account"
+                size={30}
+                color={focused ? '#F87F16' : 'white'}
+              />
+            );
+          },
         }}
       />
     </TabNav.Navigator>
@@ -115,7 +136,7 @@ const TabNavigatorContent = () => {
 const TabNavigation = () => {
   return (
     <SafeAreaProvider>
-        <TabNavigatorContent />
+      <TabNavigatorContent />
     </SafeAreaProvider>
   );
 };

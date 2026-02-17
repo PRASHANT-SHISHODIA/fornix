@@ -11,6 +11,7 @@ import {
   Image,
   FlatList,
 } from 'react-native';
+import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon1 from 'react-native-vector-icons/Ionicons';
@@ -19,6 +20,7 @@ import Icon2 from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../API/axiosConfig';
 import BannerCarousel from './BannerCarousel';
+
 
 // Screen width and height
 const { width, height } = Dimensions.get('window');
@@ -80,14 +82,13 @@ const Home = () => {
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const [activeFilter, setActiveFilter] = useState('All');
-  const [isBlinking, setIsBlinking] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [banners, setBanners] = useState([])
   const [testimonials, setTestimonials] = useState([])
+  const [videoUrl, setVideoUrl] = useState(null)
   const [error, setError] = useState(null);
   const testimonialRef = useRef(null);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
@@ -177,16 +178,21 @@ const Home = () => {
 
 
 
-  const filterTabs = ['All', 'Pneumonics', 'Live Quiz'];
   const fetchPrograms = async () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem("token");
+      const savedCourse = await AsyncStorage.getItem("selectedCourse");
+      const courseId = savedCourse ? JSON.parse(savedCourse).courseId : null;
+
       const response = await API.get(
         "/home",
         {
           headers: {
             Authorization: `Bearer ${token}`,
+          },
+          params: {
+            course_id: courseId
           }
         }
       );
@@ -194,6 +200,7 @@ const Home = () => {
       setPrograms(response.data?.data || []);
       setBanners(response.data?.banners || []);
       setTestimonials(response.data?.testimonials || []);
+      setVideoUrl(response.data?.course_video_url || null);
 
     } catch (error) {
       setError(error.response?.data || error.message)
@@ -256,25 +263,6 @@ const Home = () => {
   // Carousel data with doctor images
 
 
-  const handleFilterPress = (filter) => {
-    setActiveFilter(filter);
-    // Navigate to Mood screen when Live Quiz is pressed
-    if (filter === 'Live Quiz') {
-      // navigation.navigate('Mood');
-    }
-  };
-
-  // Blinking effect for Live Quiz tab - starts automatically
-  useEffect(() => {
-    const blinkInterval = setInterval(() => {
-      setIsBlinking(prev => !prev);
-    }, 500); // Blink every 500ms
-
-    return () => {
-      clearInterval(blinkInterval);
-    };
-  }, []); // Empty dependency array means this runs once on mount
-
   // Auto-scroll carousel
   useEffect(() => {
     const autoScroll = setInterval(() => {
@@ -289,17 +277,6 @@ const Home = () => {
 
     return () => clearInterval(autoScroll);
   }, [currentIndex]);
-
-  // const getTabBackgroundColor = (filter) => {
-  //   if (filter === 'Live Quiz') {
-  //     return isBlinking ? '#F87F16' : '#1A3848';
-  //   }
-  //   return activeFilter === filter ? '#F87F16' : '#1A3848';
-  // };
-  const getTabBackgroundColor = (filter) => {
-    return activeFilter === filter ? '#F87F16' : '#1A3848';
-  };
-
 
   const onScroll = (event) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
@@ -407,42 +384,20 @@ const Home = () => {
           </View>
         </View>
 
+        {/* Course Video Section */}
+        {videoUrl && (
+          <View style={styles.videoContainer}>
+            <Video
+              source={{ uri: videoUrl }}
+              style={styles.backgroundVideo}
+              controls={true}
+              resizeMode="cover"
+              paused={true}
+            />
+          </View>
+        )}
+
         <Text style={styles.Titletext}>Your Program (30)</Text>
-        <View style={styles.filterContainer}>
-          {filterTabs.map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterTab,
-                { backgroundColor: getTabBackgroundColor(filter) }
-              ]}
-              onPress={() => handleFilterPress(filter)}
-              activeOpacity={0.8}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text
-                  style={[
-                    styles.filterText,
-                    activeFilter === filter && styles.activeText,
-                  ]}
-                >
-                  {filter}
-                </Text>
-
-                {/* 🔴 LIVE blinking dot */}
-                {filter === 'Live Quiz' && (
-                  <View
-                    style={[
-                      styles.liveDot,
-                      { opacity: isBlinking ? 1 : 0.2 },
-                    ]}
-                  />
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
         <BannerCarousel
           banners={banners}
           loading={loading}
@@ -487,6 +442,15 @@ const Home = () => {
         </View>
 
       </ScrollView>
+
+      {/* Fixed Ai Bot Floating Action Button on the left side */}
+      <TouchableOpacity
+        style={styles.aiBotButton}
+        onPress={() => navigation.navigate('AiBot')}
+        activeOpacity={0.8}>
+        <Icon name="robot" size={moderateScale(getResponsiveSize(18))} color="white" />
+        <Text style={styles.aiBotText}>Ai bot</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -495,6 +459,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  videoContainer: {
+    width: width - scale(40),
+    height: verticalScale(200),
+    alignSelf: 'center',
+    borderRadius: moderateScale(15),
+    overflow: 'hidden',
+    backgroundColor: '#000',
+    marginVertical: verticalScale(10),
+  },
+  backgroundVideo: {
+    width: '100%',
+    height: '100%',
+  },
+  aiBotButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F87F16',
+    paddingHorizontal: scale(15),
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(25),
+    position: 'absolute',
+    bottom: verticalScale(100),
+    left: scale(250),
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    zIndex: 1000,
+  },
+  aiBotText: {
+    color: 'white',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: moderateScale(14),
+    marginLeft: scale(8),
+    includeFontPadding: false,
   },
   scrollView: {
     flex: 1,
@@ -565,29 +566,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Medium',
     fontSize: moderateScale(getResponsiveSize(14)),
     color: 'white',
-    includeFontPadding: false,
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: scale(getResponsiveSize(20)),
-    paddingVertical: verticalScale(getResponsiveSize(10)),
-  },
-  filterTab: {
-    paddingHorizontal: scale(getResponsiveSize(20)),
-    paddingVertical: verticalScale(getResponsiveSize(8)),
-    borderRadius: moderateScale(getResponsiveSize(20)),
-    marginRight: scale(getResponsiveSize(10)),
-    backgroundColor: '#1A3848',
-    minWidth: scale(getResponsiveSize(80)),
-  },
-  activeTab: {
-    backgroundColor: '#F87F16',
-  },
-  filterText: {
-    fontSize: moderateScale(getResponsiveSize(14)),
-    fontFamily: 'Poppins-Medium',
-    color: 'white',
-    textAlign: 'center',
     includeFontPadding: false,
   },
   activeText: {
@@ -734,14 +712,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     includeFontPadding: false,
   },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'red',
-    marginLeft: 6,
-  },
-
 });
 
 export default Home;

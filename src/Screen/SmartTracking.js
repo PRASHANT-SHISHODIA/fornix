@@ -37,7 +37,7 @@ const getResponsiveFontSize = (size) => {
 };
 
 /* ================= MAIN SCREEN ================= */
-const SmartTrackingScreen = ({ navigation }) => {
+const SmartTrackingScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [apiData, setApiData] = useState(null);
   const { width } = useWindowDimensions();
@@ -49,15 +49,18 @@ const SmartTrackingScreen = ({ navigation }) => {
 
       const userId = await AsyncStorage.getItem('user_id');
       const courseRaw = await AsyncStorage.getItem('selectedCourse');
+      let courseId = null;
 
-      if (!userId || !courseRaw) {
-        throw new Error('User or Course not found');
+      if (courseRaw) {
+        const course = JSON.parse(courseRaw);
+        courseId = course.id || course.courseId;
+      } else if (route.params?.courseId || route.params?.course) {
+        courseId = route.params.courseId || route.params.course;
       }
 
-      const course = JSON.parse(courseRaw);
-
-      // Check if course has id or courseId property
-      const courseId = course.id || course.courseId;
+      if (!userId || !courseId) {
+        throw new Error('User or Course not found');
+      }
 
       const body = {
         user_id: userId,
@@ -74,12 +77,6 @@ const SmartTrackingScreen = ({ navigation }) => {
       console.log("Smart Tracking Data:", res.data)
     } catch (err) {
       console.log("Error fetching smart tracking:", err);
-      // Don't show alert immediately if it's just a network blip, 
-      // but here we show it for visibility.
-      // Alert.alert(
-      //   'Note',
-      //   err?.response?.data?.error || "Could not fetch smart tracking data."
-      // );
     } finally {
       setLoading(false);
     }
@@ -204,7 +201,6 @@ const SmartTrackingScreen = ({ navigation }) => {
             isDate
           />
         </View>
-
         {/* ================= WEAKNESSES ================= */}
         {weaknesses.length > 0 && (
           <>

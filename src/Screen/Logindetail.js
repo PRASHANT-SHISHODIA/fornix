@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 import API from '../API/axiosConfig';
+import useUserStore from '../store/useUserStore';
 
 const { width } = Dimensions.get('window');
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -83,6 +84,11 @@ const LoginDetail = () => {
         // await fetchAndSaveSubjects(data.token)
         console.log("TOKEN SAVED", data.token);
         console.log("USER ID SAVED", data.user.id);
+
+        // Update global store with profile picture
+        if (data.user.profile_picture) {
+          useUserStore.getState().setProfilePicture(data.user.profile_picture);
+        }
         // 🔥 READ COURSE SELECTION
         const selectedCourse = await getSelectedCourseFromStorage();
 
