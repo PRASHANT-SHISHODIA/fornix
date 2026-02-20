@@ -22,36 +22,17 @@ import axios from 'axios';
 const { width, height } = Dimensions.get('window');
 
 // 🔹 Responsive scaling
-const scale = size => (width / 375) * size;
-const verticalScale = size => (height / 812) * size;
-const moderateScale = (size, factor = 0.5) =>
-  size + (scale(size) - size) * factor;
+import {
+  scale,
+  verticalScale,
+  moderateScale,
+  getResponsiveSize,
+  getGridColumns,
+  getHeaderTransform,
+  getSearchTransform,
+} from '../Utils/ResponsiveUtils';
 
-// 🔹 Responsive size function based on screen width
-const getResponsiveSize = (size) => {
-  if (width < 375) { // Small phones
-    return size * 0.85;
-  } else if (width > 414) { // Large phones
-    return size * 1.15;
-  }
-  return size; // Normal phones
-};
-
-// 🔹 Get responsive transform values for header
-const getHeaderTransform = () => {
-  if (width < 375) return 1.6; // Small phones
-  if (width > 414) return 1.8; // Large phones
-  return 1.7; // Normal phones
-};
-
-// 🔹 Get responsive search container transform
-const getSearchTransform = () => {
-  if (width < 375) return 0.62; // Small phones
-  if (width > 414) return 0.55; // Large phones
-  return 0.58; // Normal phones
-};
-
-const Chapterwise = ({route}) => {
+const Chapterwise = ({ route }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [Chapter, setChapter] = useState([])
@@ -60,9 +41,10 @@ const Chapterwise = ({route}) => {
   const { subjectId, subjectName } = route.params || {};
   const bookAnim = useRef(new Animated.Value(0)).current;
   const mood = route?.params?.mood ?? null;
+  const Course = route?.params?.Course ?? null;
   console.log("MODE RECEIVED IN CHAPTERWISE :", mood?.title);
-  console.log("SUBJECT ID",subjectId);
-  console.log("SUBJECT NAME",subjectName);
+  console.log("SUBJECT ID", subjectId);
+  console.log("SUBJECT NAME", subjectName);
 
 
   // 🔹 Subject list from PDF with images
@@ -85,7 +67,7 @@ const Chapterwise = ({route}) => {
 
       const responae = await axios.post('https://fornix-medical.vercel.app/api/v1/chapters',
         {
-          subject_id: subjectId||"f36e020a-5ffb-4df9-976a-b289797d8627",
+          subject_id: subjectId || "f36e020a-5ffb-4df9-976a-b289797d8627",
           mood: mood,
         },
         {
@@ -116,55 +98,46 @@ const Chapterwise = ({route}) => {
     return words.slice(0, maxWords).join('') + '...';
   };
 
-  useEffect(() => {
-    if (loading) {
+  const SkeletonItem = () => {
+    const opacity = useRef(new Animated.Value(0.3)).current;
+
+    useEffect(() => {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(bookAnim, {
-            toValue: 1,
-            duration: 700,
+          Animated.timing(opacity, {
+            toValue: 0.7,
+            duration: 800,
             useNativeDriver: true,
           }),
-          Animated.timing(bookAnim, {
-            toValue: 0,
-            duration: 700,
+          Animated.timing(opacity, {
+            toValue: 0.3,
+            duration: 800,
             useNativeDriver: true,
           }),
         ])
       ).start();
-    }
-  }, [loading, bookAnim]);
+    }, []);
 
-  const leftPageRotate = bookAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '-25deg'],
-  });
-
-  const rightPageRotate = bookAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '25deg'],
-  });
-
-
-  const BookLoader = () => (
-    <View style={styles.loaderContainer}>
-      <View style={styles.book}>
-        <Animated.View
-          style={[
-            styles.page,
-            { transform: [{ rotateY: leftPageRotate }] },
-          ]}
-        />
-        <Animated.View
-          style={[
-            styles.page,
-            styles.rightPage,
-            { transform: [{ rotateY: rightPageRotate }] },
-          ]}
-        />
+    return (
+      <View style={styles.skeletonCard}>
+        <View style={styles.featureContent}>
+          <View style={styles.featureIconContainer}>
+            <Animated.View style={[styles.skeletonCircle, { opacity }]} />
+          </View>
+          <View style={styles.textContainer}>
+            <Animated.View style={[styles.skeletonBar, { opacity, width: '70%' }]} />
+          </View>
+        </View>
       </View>
-      <Text style={styles.loadingText}>Loading Chapters...</Text>
-    </View>
+    );
+  };
+
+  const SkeletonGrid = () => (
+    <>
+      {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
+        <SkeletonItem key={item} />
+      ))}
+    </>
   );
 
 
@@ -195,14 +168,14 @@ const Chapterwise = ({route}) => {
               </TouchableOpacity>
               <Text style={styles.title}>{subjectName}</Text>
             </View>
-            <Text style={styles.sectionTitle}>Chapter Wise</Text>
+            {/* <Text style={styles.sectionTitle}>Chapter Wise</Text> */}
           </View>
         </View>
 
         {/* 🔹 Subject Grid */}
         <View style={styles.featuresGrid}>
           {loading ? (
-            <BookLoader />
+            <SkeletonGrid />
           ) : (
             Chapter.map(sub => (
               <TouchableOpacity
@@ -214,12 +187,19 @@ const Chapterwise = ({route}) => {
                       chapterId: sub.id,
                       ChapterName: sub.name,
                       mood: mood,
+
                     });
                   } else {
-                    navigation.navigate('Selected', {
-                      chapterId: sub.id,
-                      ChapterName: sub.name,
-                      // mood:mood,
+                    // navigation.navigate('Selected', {
+                    //   chapterId: sub.id,
+                    //   ChapterName: sub.name,
+                    //   // mood:mood,
+                    // });
+                    navigation.navigate('Mood', {
+                      subjectId: sub.id,
+                      subjectName: sub.name,
+                      Course: Course,
+                      from: 'mood',
                     });
                   }
                 }
@@ -227,7 +207,15 @@ const Chapterwise = ({route}) => {
                 }>
                 <View style={styles.featureContent}>
                   <View style={styles.featureIconContainer}>
-                    <Icon name="book-open" size={22} color="#1A3848" />
+                    {sub.icon_url ? (
+                      <Image
+                        source={{ uri: sub.icon_url }}
+                        style={styles.subjectImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Icon name="book-open" size={22} color="#1A3848" />
+                    )}
                   </View>
 
                   <View style={styles.textContainer}>
@@ -292,6 +280,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: verticalScale(getResponsiveSize(25)),
     includeFontPadding: false,
+    height: verticalScale(getResponsiveSize(100))
   },
   sectionTitle: {
     fontSize: moderateScale(getResponsiveSize(14)),
@@ -309,7 +298,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(getResponsiveSize(30)),
   },
   featureCard: {
-    width: (width - scale(getResponsiveSize(60))) / 2,
+    width: (width - scale(getResponsiveSize(50))) / getGridColumns(),
     backgroundColor: '#1A3848',
     borderRadius: moderateScale(getResponsiveSize(16)),
     paddingHorizontal: scale(getResponsiveSize(15)),
@@ -319,7 +308,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 3,
+    minHeight: verticalScale(getResponsiveSize(80)),
+  },
+  skeletonCard: {
+    width: (width - scale(getResponsiveSize(50))) / getGridColumns(),
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(getResponsiveSize(16)),
+    paddingHorizontal: scale(getResponsiveSize(15)),
+    marginBottom: verticalScale(getResponsiveSize(20)),
+    paddingVertical: verticalScale(getResponsiveSize(10)),
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     minHeight: verticalScale(getResponsiveSize(80)),
   },
   featureContent: {
@@ -329,20 +329,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featureIconContainer: {
-    width: scale(getResponsiveSize(60)),
-    height: scale(getResponsiveSize(60)),
-    borderRadius: scale(getResponsiveSize(60)),
-    backgroundColor: '#F0F4F8',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#F87F16',
-    marginLeft: scale(getResponsiveSize(-25)),
   },
   subjectImage: {
-    width: scale(getResponsiveSize(56)),
-    height: scale(getResponsiveSize(56)),
-    borderRadius: moderateScale(getResponsiveSize(30)),
+    width: scale(getResponsiveSize(60)),
+    height: scale(getResponsiveSize(60)),
+    borderRadius: scale(getResponsiveSize(30)),
   },
   textContainer: {
     flex: 1,
@@ -356,38 +349,16 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     includeFontPadding: false,
   },
-  loaderContainer: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: verticalScale(40),
+  skeletonCircle: {
+    width: scale(getResponsiveSize(60)),
+    height: scale(getResponsiveSize(60)),
+    borderRadius: scale(getResponsiveSize(30)),
+    backgroundColor: '#E0E0E0',
   },
-
-  book: {
-    flexDirection: 'row',
-    width: 70,
-    height: 50,
-    marginBottom: 12,
-  },
-
-  page: {
-    width: 35,
-    height: 50,
-    backgroundColor: '#F87F16',
-    borderTopLeftRadius: 6,
-    borderBottomLeftRadius: 6,
-  },
-
-  rightPage: {
-    backgroundColor: '#1A3848',
-    borderTopRightRadius: 6,
-    borderBottomRightRadius: 6,
-  },
-
-  loadingText: {
-    fontSize: 13,
-    color: '#1A3848',
-    fontFamily: 'Poppins-Medium',
+  skeletonBar: {
+    height: verticalScale(getResponsiveSize(20)),
+    borderRadius: 4,
+    backgroundColor: '#E0E0E0',
   },
 
 });

@@ -18,6 +18,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import API from '../API/axiosConfig';
 
@@ -57,6 +58,7 @@ const formatDate = date =>
 const AiBot = () => {
   const navigation = useNavigation();
   const flatListRef = useRef(null);
+  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState([
     {
@@ -320,7 +322,7 @@ const AiBot = () => {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
         >
-          <View style={styles.inputRow}>
+          <View style={[styles.inputRow, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom + 10, 12) : 12 }]}>
             <TextInput
               value={inputText}
               onChangeText={setInputText}

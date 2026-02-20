@@ -131,27 +131,72 @@ const History = () => {
     return '#F44336'; // Red for low scores
   };
 
-  const formatTimeTaken = (seconds) => {
+  const formatTimeTaken = (item) => {
+    let seconds = item.time_taken_seconds;
+
+    // Fallback 1: 'time_taken' could be a generic number or string like "00:15:30"
+    if (seconds === null || seconds === undefined) {
+      if (item.time_taken !== undefined && item.time_taken !== null) {
+        if (typeof item.time_taken === 'string' && item.time_taken.includes(':')) {
+          const parts = item.time_taken.split(':');
+          if (parts.length === 3) seconds = (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+          else if (parts.length === 2) seconds = (+parts[0]) * 60 + (+parts[1]);
+        } else {
+          seconds = item.time_taken;
+        }
+      }
+    }
+
+    // Fallback 2: Calculate from timestamps
+    if (seconds === null || seconds === undefined) {
+      if (item.started_at && item.completed_at) {
+        const start = new Date(item.started_at).getTime();
+        const end = new Date(item.completed_at).getTime();
+        if (!isNaN(start) && !isNaN(end)) {
+          seconds = (end - start) / 1000;
+        }
+      }
+    }
+
+    console.log("Resolved Time taken in history:", seconds);
+    if (seconds === null || seconds === undefined) {
+      return Object.keys(item).filter(k => k.includes('time') || k.includes('at') || k.includes('dur')).join(', ') || '?';
+    }
+
     const time = Number(seconds);
-    if (!time || isNaN(time)) return 'N/A';
+    if (isNaN(time) || time < 0) {
+      return Object.keys(item).filter(k => k.includes('time') || k.includes('at') || k.includes('dur')).join(', ') || '?';
+    }
 
     const minutes = Math.floor(time / 60);
-    const remainingSeconds = time % 60;
+    const remainingSeconds = Math.floor(time % 60);
     return `${minutes}m ${remainingSeconds}s`;
   };
 
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    if (!dateString) return 'N/A';
+
+    // Normalize the date string to a format React Native handles safely across iOS/Android
+    const safeDateString = dateString.includes('+00:00') ? dateString.replace('+00:00', 'Z') : dateString;
+    const date = new Date(safeDateString);
+
+    if (isNaN(date.getTime())) return 'Invalid Date';
+
     const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    // Reset times to midnight to calculate calendar day differences properly
+    const dateMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const diffMs = nowMidnight - dateMidnight;
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
       return 'Today';
     } else if (diffDays === 1) {
       return 'Yesterday';
-    } else if (diffDays < 7) {
+    } else if (diffDays > 1 && diffDays < 7) {
       return `${diffDays} days ago`;
     } else {
       return date.toLocaleDateString('en-US', {
@@ -164,6 +209,7 @@ const History = () => {
 
 
   const renderHistoryItem = (item, index) => {
+    console.log(item);
     const scoreColor = getScoreColor(item.score) || 0;
     const totalQuestions = Number(item.total_questions) || 0;
     const correctAnswers = Number(item.correct_answers) || 0;
@@ -178,7 +224,7 @@ const History = () => {
         onPress={() =>
           navigation.navigate('Results', {
             resultData: item,
-            timeTaken: item.time_taken_seconds || 0,
+            timeTaken: item.time_taken_seconds || item.time_taken || 0,
           })
         }
         activeOpacity={0.7}
@@ -210,12 +256,12 @@ const History = () => {
                 Accuracy: {accuracy}%
               </Text>
             </View>
-            <View style={styles.statRow}>
+            {/* <View style={styles.statRow}>
               <Icon name="timer" size={moderateScale(getResponsiveSize(14))} color="#FF9800" />
               <Text style={styles.statText}>
-                Time: {formatTimeTaken(item.time_taken_seconds)}
+                Time: {formatTimeTaken(item.started_at)}
               </Text>
-            </View>
+            </View> */}
           </View>
         </View>
 
@@ -417,7 +463,7 @@ const styles = StyleSheet.create({
   attemptText: {
     fontSize: moderateScale(getResponsiveSize(16)),
     fontFamily: 'Poppins-SemiBold',
-    color: '#000',
+    color: '#fff',
     marginLeft: scale(getResponsiveSize(8)),
   },
   dateText: {

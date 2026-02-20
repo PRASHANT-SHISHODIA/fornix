@@ -1,5 +1,5 @@
 // Fornixqbank2.js
-import React, { useState, useEffect, useRef, use, } from 'react';
+import React, { useState, useEffect, useRef, use, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,9 @@ import {
   Image,
   Animated,
   ActivityIndicator,
-  Modal
+  Modal, TextInput
 } from 'react-native';
+// import { SelectableText } from '@rob117/react-native-selectable-text';
 // import { useQuizStore } from '../API/store/useQuizStore';
 import useQuizStore from '../store/useQuizStore';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -63,6 +64,65 @@ const getSearchTransform = () => {
   return 0.58; // Normal phones
 };
 
+//* -------------------- MAIN COMPONENT -------------------- */
+const HighlightableText = ({ text, style, highlights, onSelectionChange }) => {
+  if (!text) return null;
+
+  // Merge overlapping or touch highlights
+  let merged = [];
+  if (highlights && highlights.length > 0) {
+    const sorted = [...highlights].sort((a, b) => a.start - b.start);
+    for (const h of sorted) {
+      if (merged.length === 0) {
+        merged.push({ ...h });
+      } else {
+        const last = merged[merged.length - 1];
+        if (h.start <= last.end) {
+          last.end = Math.max(last.end, h.end);
+        } else {
+          merged.push({ ...h });
+        }
+      }
+    }
+  }
+
+  const chunks = [];
+  let lastIndex = 0;
+  merged.forEach(h => {
+    if (h.start > lastIndex) {
+      chunks.push({ text: text.substring(lastIndex, h.start), isHighlight: false });
+    }
+    chunks.push({ text: text.substring(Math.max(lastIndex, h.start), h.end), isHighlight: true });
+    lastIndex = h.end;
+  });
+  if (lastIndex < text.length) {
+    chunks.push({ text: text.substring(lastIndex), isHighlight: false });
+  }
+
+  return (
+    <TextInput
+      multiline={true}
+      // CRITICAL: editable must be true on Android to fire onSelectionChange reliably
+      editable={true}
+      // But we prevent the keyboard from popping up
+      showSoftInputOnFocus={false}
+      selectable={true}
+      contextMenuHidden={true}
+      caretHidden={true}
+      onSelectionChange={onSelectionChange}
+      // Prevent actual text changes since editable=true
+      onChangeText={() => { }}
+      style={[style, { padding: 0, margin: 0, color: style?.color || '#1A3848' }]}
+    >
+      {chunks.map((chunk, i) => (
+        <Text key={i} style={chunk.isHighlight ? { backgroundColor: 'yellow', color: '#000' } : {}}>
+          {chunk.text}
+        </Text>
+      ))}
+    </TextInput>
+  );
+};
+
 const Fornixqbank2 = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -108,9 +168,52 @@ const Fornixqbank2 = () => {
   const canSubmit = isLastQuestion && hasAnsweredCurrent.current;
   const [quizStartTime, setQuizStartTime] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [attempted, setAttemptId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const submitProgress = useRef(new Animated.Value(0)).current;
+  // Track native selection ranges by question ID
+  const [highlightData, setHighlightData] = useState({});
+  const [currentSelection, setCurrentSelection] = useState(null);
+
+  const handleSelectionChange = useCallback((event) => {
+    const { start, end } = event.nativeEvent.selection;
+    if (start !== end) {
+      setCurrentSelection({ start: Math.min(start, end), end: Math.max(start, end) });
+    } else {
+      setCurrentSelection(null);
+    }
+  }, []);
+
+  const applyHighlight = () => {
+    if (currentSelection && currentQuestion?.id) {
+      setHighlightData(prev => {
+        const id = currentQuestion.id;
+        const existing = prev[id] || [];
+        return {
+          ...prev,
+          [id]: [...existing, currentSelection]
+        };
+      });
+    }
+  };
+
+  const removeHighlight = () => {
+    if (currentQuestion?.id) {
+      if (currentSelection) {
+        setHighlightData(prev => {
+          const id = currentQuestion.id;
+          const existing = prev[id] || [];
+          // If current selection overlaps a highlight, remove it
+          const filtered = existing.filter(h =>
+            !(Math.max(h.start, currentSelection.start) < Math.min(h.end, currentSelection.end))
+          );
+          return { ...prev, [id]: filtered };
+        });
+      } else {
+        // Clear all if no selection
+        setHighlightData(prev => ({ ...prev, [currentQuestion.id]: [] }));
+      }
+    }
+  };
   const saveAnswer = useQuizStore((state) => state.saveAnswer);
   const getAnswer = useQuizStore((state) => state.getAnswer);
   // const route = useRoute()
@@ -668,10 +771,6 @@ const Fornixqbank2 = () => {
     }
   };
 
-
-
-
-
   // 🔹 Custom Loader Component
   const CustomLoader = () => {
     const [scaleAnim] = useState(new Animated.Value(1));
@@ -983,10 +1082,23 @@ const Fornixqbank2 = () => {
         </TouchableOpacity>
         {/* 🔹 Question Container */}
         <View style={styles.questionContainer}>
+          {/* Highlighting Tools */}
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 15 }}>
+            <TouchableOpacity onPress={applyHighlight} style={{ marginRight: 10, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: '#FFF9C4', borderRadius: 6, borderWidth: 1, borderColor: '#FBC02D' }}>
+              <Text style={{ color: '#F57F17', fontWeight: 'bold', fontSize: 13 }}>Highlight</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={removeHighlight} style={{ paddingVertical: 6, paddingHorizontal: 12, backgroundColor: '#FFEBEE', borderRadius: 6, borderWidth: 1, borderColor: '#D32F2F' }}>
+              <Text style={{ color: '#C62828', fontWeight: 'bold', fontSize: 13 }}>Remove</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* 🔹 Question Text */}
-          <Text style={styles.questionText}>
-            {currentQuestion?.question_text}
-          </Text>
+          <HighlightableText
+            text={currentQuestion?.question_text || ''}
+            highlights={highlightData[currentQuestion?.id] || []}
+            onSelectionChange={handleSelectionChange}
+            style={styles.questionText}
+          />
           {currentQuestion.question_image_url && (
             <Image
               source={{ uri: currentQuestion.question_image_url }}

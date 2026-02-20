@@ -167,7 +167,7 @@ const Mood = () => {
                   color="#FFFFFF"
                 />
               </TouchableOpacity>
-              <Text style={styles.title}>Mood</Text>
+              <Text style={styles.title}>Mode</Text>
             </View>
           </View>
         </View>

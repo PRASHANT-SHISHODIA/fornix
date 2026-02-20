@@ -17,6 +17,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import MockTest from './MockTest';
+import Icon1 from 'react-native-vector-icons/Ionicons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,6 +29,26 @@ const responsiveFontSize = size => {
   const scaleFactor = width / 375;
   return size * scaleFactor;
 };
+
+const getResponsiveSize = (size) => {
+  if (width < 375) return size * 0.85;
+  if (width > 414) return size * 1.15;
+  return size;
+};
+
+const getHeaderTransform = () => {
+  if (width < 375) return 1.6;
+  if (width > 414) return 1.8;
+  return 1.7;
+};
+
+const getSearchTransform = () => {
+  if (width < 375) return 0.62;
+  if (width > 414) return 0.55;
+  return 0.58;
+};
+
+const moderateScale = (size, factor = 0.5) => size + (scale(size) - size) * factor;
 
 /* ---------- BASE API ---------- */
 const START_TEST_API =
@@ -191,11 +212,11 @@ const Quizpage = () => {
           questions: questions,
         });
       } else {
-        Alert.alert('Error', "Quiz Submission failed");
+        Alert.alert('Error', "Mock Submission failed");
       }
     } catch (error) {
       console.log("SUBMIT ERROR", error?.response || error);
-      Alert.alert("Error", 'Something went wrong while Submitting quiz');
+      Alert.alert("Error", 'Something went wrong while Submitting Mock');
     } finally {
       setSubmitting(false);
     }
@@ -210,6 +231,44 @@ const Quizpage = () => {
         <Text style={styles.loaderText}>
           {submitting ? 'Submitting your results...' : 'Loading mock test...'}
         </Text>
+      </View>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: '#F5F5F5' }]}>
+        <StatusBar backgroundColor="#F87F16" barStyle="light-content" />
+
+        {/* 🔹 Header */}
+        <View style={styles.header}>
+          <View style={styles.searchContainer}>
+            <View style={styles.headerRow}>
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={styles.backButton}>
+                <Icon1
+                  name="arrow-back"
+                  size={moderateScale(getResponsiveSize(28))}
+                  color="#FFFFFF"
+                />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Mock</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: responsiveFontSize(18), fontFamily: 'Poppins-SemiBold', color: '#000' }}>
+            No Mock available for this
+          </Text>
+          <TouchableOpacity
+            style={{ marginTop: 20, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#1A3848', borderRadius: 8 }}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={{ color: '#fff', fontFamily: 'Poppins-SemiBold' }}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -294,6 +353,40 @@ const Quizpage = () => {
 /* ---------- Styles ---------- */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
+  header: {
+    backgroundColor: '#F87F16',
+    marginBottom: verticalScale(getResponsiveSize(40)),
+    paddingBottom: verticalScale(getResponsiveSize(10)),
+    height: verticalScale(getResponsiveSize(170)),
+    borderBottomLeftRadius: scale(getResponsiveSize(400)),
+    borderBottomRightRadius: scale(getResponsiveSize(400)),
+    transform: [{ scaleX: getHeaderTransform() }],
+  },
+  searchContainer: {
+    paddingHorizontal: scale(getResponsiveSize(50)),
+    paddingVertical: verticalScale(getResponsiveSize(20)),
+    transform: [{ scaleX: getSearchTransform() }],
+    paddingTop: verticalScale(getResponsiveSize(60)),
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    left: width < 375 ? -25 : -30,
+    paddingHorizontal: scale(getResponsiveSize(10)),
+    zIndex: 1,
+  },
+  headerTitle: {
+    fontSize: moderateScale(getResponsiveSize(24)),
+    fontFamily: 'Poppins-SemiBold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: verticalScale(getResponsiveSize(25)),
+    includeFontPadding: false,
+  },
   scrollContent: { padding: scale(20), paddingBottom: verticalScale(30) },
   progressText: {
     color: '#000',

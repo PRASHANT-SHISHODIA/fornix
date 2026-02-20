@@ -23,39 +23,33 @@ const scale = size => (SCREEN_WIDTH / baseWidth) * size;
 const verticalScale = size => (SCREEN_HEIGHT / baseHeight) * size;
 const moderateScale = (size, factor = 0.5) => size + (scale(size) - size) * factor;
 
-// 🔹 Responsive Size for Tablets
 const getResponsiveSize = (size) => {
     if (IS_TABLET) {
-        return size * 1.5; // Scale up for tablets
-    } else if (SCREEN_WIDTH < 375) {
-        return size * 0.85; // Small phones
-    } else if (SCREEN_WIDTH > 414) {
-        return size * 1.15; // Large phones
+        return size * (SCREEN_WIDTH / 768); // Proportional scale for tablets starting at 768
     }
-    return size; // Normal phones
+    const scaleFactor = SCREEN_WIDTH / baseWidth; // continuous scaling
+    return size * Math.max(0.85, Math.min(scaleFactor, 1.25));
 };
 
 // 🔹 Header Transform
 const getHeaderTransform = () => {
-    if (IS_TABLET) return 2.5;
-    if (SCREEN_WIDTH < 375) return 1.6;
-    if (SCREEN_WIDTH > 414) return 1.8;
-    return 1.7;
+    if (IS_TABLET) return 2.5 * (SCREEN_WIDTH / 768);
+    const scaleFactor = SCREEN_WIDTH / baseWidth;
+    return 1.7 * Math.max(0.9, Math.min(scaleFactor, 1.15));
 };
 
 // 🔹 Search Transform
 const getSearchTransform = () => {
-    if (IS_TABLET) return 0.45;
-    if (SCREEN_WIDTH < 375) return 0.62;
-    if (SCREEN_WIDTH > 414) return 0.55;
-    return 0.58;
+    if (IS_TABLET) return 0.45 * (768 / SCREEN_WIDTH);
+    const scaleFactor = SCREEN_WIDTH / baseWidth;
+    // inverse scaling: larger width -> smaller search transform
+    return 0.58 * Math.max(0.8, Math.min(1 / scaleFactor, 1.1));
 }
-
 
 // 🔹 Grid Columns Helper
 const getGridColumns = () => {
     if (SCREEN_WIDTH >= 1024) return 4; // Large tablets/Desktop
-    if (SCREEN_WIDTH >= 768) return 3;  // Tablets
+    if (SCREEN_WIDTH >= 600) return 3;  // Tablets and foldables
     return 2; // Phones
 };
 

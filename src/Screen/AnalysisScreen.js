@@ -103,7 +103,7 @@ const AnalysisScreen = () => {
     }) : 'N/A';
 
   const getStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'completed': return '#10B981';
       case 'in progress': return '#F59E0B';
       case 'pending': return '#6B7280';
@@ -156,7 +156,7 @@ const AnalysisScreen = () => {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
@@ -233,24 +233,24 @@ const AnalysisScreen = () => {
             <Icon name="chart-bar" size={20} color="#1A3848" />
             <Text style={styles.sectionTitle}>Performance Overview</Text>
           </View>
-          
+
           <View style={styles.overviewGrid}>
             <View style={styles.overviewItem}>
               <Text style={styles.overviewValue}>{overview?.total_correct || 0}</Text>
               <Text style={styles.overviewLabel}>Correct</Text>
             </View>
-            
+
             <View style={styles.divider} />
-            
+
             <View style={styles.overviewItem}>
               <Text style={[styles.overviewValue, styles.incorrectValue]}>
                 {overview?.total_incorrect || 0}
               </Text>
               <Text style={styles.overviewLabel}>Incorrect</Text>
             </View>
-            
+
             <View style={styles.divider} />
-            
+
             <View style={styles.overviewItem}>
               <Text style={[styles.overviewValue, styles.skippedValue]}>
                 {overview?.total_skipped || 0}
@@ -266,7 +266,6 @@ const AnalysisScreen = () => {
             <Icon name="file-alt" size={20} color="#1A3848" />
             <Text style={styles.sectionTitle}>Mock Tests</Text>
           </View>
-
           {mock_tests?.tests?.length ? (
             mock_tests.tests.map((t, index) => (
               <TouchableOpacity key={t.attempt_id} style={styles.testCard}>
@@ -286,15 +285,15 @@ const AnalysisScreen = () => {
                     <Text style={styles.testStatusText}>{t.status}</Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.testFooter}>
                   <View style={styles.scoreContainer}>
                     <Text style={styles.scoreLabel}>Score</Text>
                     <Text style={styles.scoreValue}>{t.score || 0}%</Text>
                   </View>
-                  
+
                   <View style={styles.dividerVertical} />
-                  
+
                   <View style={styles.timeContainer}>
                     <Icon name="clock" size={14} color="#6B7280" />
                     <Text style={styles.timeText}>

@@ -105,6 +105,7 @@ const PlansScreen = () => {
       // Fetch all courses to find the plans for the selected course
       const res = await API.get('/mobile/courses');
       if (res.data?.success) {
+        console.log("=== COURSES API DATA ===", JSON.stringify(res.data.data, null, 2));
         // Handle both courseId (standard) and id (legacy/raw)
         let targetId = course.courseId || course.id;
         console.log("Initial Target ID:", targetId);
@@ -132,9 +133,13 @@ const PlansScreen = () => {
         if (currentCourse && currentCourse.plans) {
           console.log("Plans found:", currentCourse.plans.length);
           console.log("Plans Data:", JSON.stringify(currentCourse.plans, null, 2));
-          const sortedPlans = currentCourse.plans.sort(
-            (a, b) => a.priority_order - b.priority_order
-          );
+          const sortedPlans = currentCourse.plans.sort((a, b) => {
+            // Prioritize 3 months (90 days) first
+            if (a.duration_in_days === 90 && b.duration_in_days !== 90) return -1;
+            if (b.duration_in_days === 90 && a.duration_in_days !== 90) return 1;
+            // Otherwise sort by duration ascending
+            return a.duration_in_days - b.duration_in_days;
+          });
           setPlans(sortedPlans);
         } else {
           console.log("No plans found for course:", targetId);
@@ -352,11 +357,19 @@ const PlanCard = ({ plan, isTablet, isLandscape, screenWidth, onBuyPress }) => {
 
       {/* FEATURES */}
       <View style={styles.features}>
-        {plan.access_features?.notes && <Feature icon="sticky-note" text="Notes" isSmallPhone={isSmallPhone} />}
-        {plan.access_features?.tests && <Feature icon="clipboard-check" text="Tests" isSmallPhone={isSmallPhone} />}
-        {plan.access_features?.videos && <Feature icon="video" text="Videos" isSmallPhone={isSmallPhone} />}
-        {plan.access_features?.ai_explanation && (
-          <Feature icon="robot" text="AI Explanation" isSmallPhone={isSmallPhone} />
+        {plan.features_list && plan.features_list.length > 0 ? (
+          plan.features_list.map((featureText, index) => (
+            <Feature key={index} icon="check-circle" text={featureText} isSmallPhone={isSmallPhone} />
+          ))
+        ) : (
+          <>
+            {plan.access_features?.notes && <Feature icon="sticky-note" text="Notes" isSmallPhone={isSmallPhone} />}
+            {plan.access_features?.tests && <Feature icon="clipboard-check" text="Tests" isSmallPhone={isSmallPhone} />}
+            {plan.access_features?.videos && <Feature icon="video" text="Videos" isSmallPhone={isSmallPhone} />}
+            {plan.access_features?.ai_explanation && (
+              <Feature icon="robot" text="AI Explanation" isSmallPhone={isSmallPhone} />
+            )}
+          </>
         )}
       </View>
 

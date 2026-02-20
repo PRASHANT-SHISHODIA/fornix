@@ -275,7 +275,7 @@ const BasicPlan = () => {
             style={styles.upgradeButtonInner}
           >
             <Icon name="crown" size={16} color="#fff" />
-            <Text style={styles.upgradeButtonText}>Buy Plan</Text>
+            <Text style={styles.upgradeButtonText}>Go Pro</Text>
           </TouchableOpacity>
         </Animated.View>
       )}

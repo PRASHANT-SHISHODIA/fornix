@@ -192,7 +192,7 @@ const MockTest = ({ navigation, route }) => {
   };
 
   const handleTestPress = (test) => {
-    navigation.navigate('Mood', {
+    navigation.navigate('Quizpage', {
       testId: test.id,
       mode: 'MOCK_TEST'
     });
