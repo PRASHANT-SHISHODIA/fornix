@@ -10,6 +10,7 @@ import {
   TextInput,
   Image,
   FlatList,
+  Animated,
 } from 'react-native';
 import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -98,6 +99,8 @@ const Home = () => {
   const CARD_WIDTH = width * 0.8;
   const CARD_MARGIN = scale(getResponsiveSize(15));
   const FULL_SIZE = CARD_WIDTH + CARD_MARGIN;
+
+
 
   useEffect(() => {
     if (!studentTestimonials?.length) return;
@@ -331,9 +334,30 @@ const Home = () => {
     );
   };
 
+  // 🔹 Pulse Animation
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar backgroundColor="#F87F16" barStyle="light-content" />
 
       <ScrollView
         style={styles.scrollView}
@@ -443,14 +467,25 @@ const Home = () => {
 
       </ScrollView>
 
-      {/* Fixed Ai Bot Floating Action Button on the left side */}
-      <TouchableOpacity
-        style={styles.aiBotButton}
-        onPress={() => navigation.navigate('AiBot')}
-        activeOpacity={0.8}>
-        <Icon name="robot" size={moderateScale(getResponsiveSize(18))} color="white" />
-        <Text style={styles.aiBotText}>Ai bot</Text>
-      </TouchableOpacity>
+      {/* Draggable Ai Bot Floating Action Button */}
+      <Animated.View
+        style={{
+          transform: [
+            { scale: scaleAnim }
+          ],
+          position: 'absolute',
+          bottom: verticalScale(100),
+          right: scale(20), // Default position
+          zIndex: 1000,
+        }}
+      >
+        <TouchableOpacity
+          style={styles.aiBotButton}
+          onPress={() => navigation.navigate('AiBot')}
+          activeOpacity={0.8}>
+          <Icon name="robot" size={moderateScale(getResponsiveSize(24))} color="white" />
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 };
@@ -474,29 +509,19 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   aiBotButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: moderateScale(getResponsiveSize(60)),
+    height: moderateScale(getResponsiveSize(60)),
+    borderRadius: moderateScale(getResponsiveSize(30)),
     backgroundColor: '#F87F16',
-    paddingHorizontal: scale(15),
-    paddingVertical: verticalScale(10),
-    borderRadius: moderateScale(25),
-    position: 'absolute',
-    bottom: verticalScale(100),
-    left: scale(250),
+    justifyContent: 'center',
+    alignItems: 'center',
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
-    zIndex: 1000,
   },
-  aiBotText: {
-    color: 'white',
-    fontFamily: 'Poppins-SemiBold',
-    fontSize: moderateScale(14),
-    marginLeft: scale(8),
-    includeFontPadding: false,
-  },
+
   scrollView: {
     flex: 1,
   },

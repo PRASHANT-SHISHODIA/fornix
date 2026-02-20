@@ -15,32 +15,18 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import Icon1 from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-
-// Screen dimensions
-const { width, height } = Dimensions.get('window');
-
-// 🔹 Responsive scaling functions
-const scale = size => (width / 375) * size;
-const verticalScale = size => (height / 812) * size;
-const moderateScale = (size, factor = 0.5) =>
-  size + (scale(size) - size) * factor;
-
-// 🔹 Responsive font size based on screen width
-const responsiveFontSize = (size) => {
-  const scaleFactor = width / 375; // Base width 375 (iPhone 6/7/8)
-  const scaledSize = size * scaleFactor;
-  return Math.max(scaledSize, size * 0.8); // Minimum 80% of original size
-};
-
-// 🔹 Get responsive padding and margins
-const getResponsiveSize = (size) => {
-  if (width < 375) { // Small phones
-    return size * 0.85;
-  } else if (width > 414) { // Large phones
-    return size * 1.1;
-  }
-  return size; // Normal phones
-};
+import {
+  scale,
+  verticalScale,
+  moderateScale,
+  getResponsiveSize,
+  IS_TABLET,
+  SCREEN_WIDTH as width,
+  SCREEN_HEIGHT as height,
+  getHeaderTransform,
+  getSearchTransform,
+  getGridColumns
+} from '../Utils/ResponsiveUtils';
 
 const Mood = () => {
   const insets = useSafeAreaInsets();
@@ -98,8 +84,8 @@ const Mood = () => {
   // 🔹 Mood options
   const moodOptions = [
     { id: '1', title: 'Competitive', icon: 'trophy' },
-    { id: '2', title: 'Funny / Easy', icon: 'laugh-beam' },
-    { id: '3', title: 'Moderate', icon: 'balance-scale' },
+    { id: '2', title: 'Easy', icon: 'smile' },
+    { id: '3', title: 'Moderate', icon: 'brain' },
     { id: '4', title: 'Difficult', icon: 'fire' },
   ];
 
@@ -122,7 +108,7 @@ const Mood = () => {
     ).start();
   }, [blinkAnim]);
 
-  console.log("mooddddd",moodOptions)
+  console.log("mooddddd", moodOptions)
 
   const backgroundColor = blinkAnim.interpolate({
     inputRange: [0, 1],
@@ -136,7 +122,7 @@ const Mood = () => {
       setSelectedMood(null);
     } else {
       // Select the new mood
-      setSelectedMood({id:moodId, title: moodOptions.find(m => m?.id === moodId)?.title || ''});
+      setSelectedMood({ id: moodId, title: moodOptions.find(m => m?.id === moodId)?.title || '' });
     }
   };
 
@@ -203,7 +189,7 @@ const Mood = () => {
                 ]}>
                   <Icon
                     name={mood.icon}
-                    size={moderateScale(getResponsiveSize(24))}
+                    size={moderateScale(getResponsiveSize(28))}
                     color={getIconColor(mood.id)}
                   />
                 </View>
@@ -272,12 +258,12 @@ const styles = StyleSheet.create({
     height: verticalScale(getResponsiveSize(170)),
     borderBottomLeftRadius: scale(getResponsiveSize(400)),
     borderBottomRightRadius: scale(getResponsiveSize(400)),
-    transform: [{ scaleX: width < 375 ? 1.5 : width > 414 ? 1.8 : 1.7 }],
+    transform: [{ scaleX: getHeaderTransform() }],
   },
   searchContainer: {
     paddingHorizontal: scale(getResponsiveSize(50)),
     paddingVertical: verticalScale(getResponsiveSize(20)),
-    transform: [{ scaleX: width < 375 ? 0.65 : width > 414 ? 0.55 : 0.58 }],
+    transform: [{ scaleX: getSearchTransform() }],
     paddingTop: verticalScale(getResponsiveSize(60)),
   },
   headerRow: {
@@ -307,43 +293,44 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(getResponsiveSize(30)),
   },
   moodCard: {
-    width: (width - scale(getResponsiveSize(60))) / 2,
+    width: (width - scale(getResponsiveSize(60))) / (IS_TABLET ? 4 : 2), // 4 columns on tablet, 2 on phone
     backgroundColor: '#1A3848',
     borderRadius: moderateScale(getResponsiveSize(16)),
     paddingHorizontal: scale(getResponsiveSize(15)),
     marginBottom: verticalScale(getResponsiveSize(20)),
-    paddingVertical: verticalScale(getResponsiveSize(15)),
+    paddingVertical: verticalScale(getResponsiveSize(20)),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 3,
-    minHeight: verticalScale(getResponsiveSize(80)),
+    minHeight: verticalScale(getResponsiveSize(120)),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   moodContent: {
-    flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    justifyContent: 'center',
   },
   moodIconContainer: {
-    width: scale(getResponsiveSize(55)),
-    height: scale(getResponsiveSize(55)),
-    borderRadius: scale(getResponsiveSize(29)),
+    width: scale(getResponsiveSize(70)),
+    height: scale(getResponsiveSize(70)),
+    borderRadius: scale(getResponsiveSize(35)),
     backgroundColor: '#F0F4F8',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#F87F16',
-    marginLeft: scale(getResponsiveSize(-28)),
+    marginBottom: verticalScale(getResponsiveSize(10)),
   },
   textContainer: {
-    flex: 1,
-    marginLeft: scale(getResponsiveSize(10)),
     justifyContent: 'center',
+    alignItems: 'center',
   },
   moodTitle: {
-    fontSize: moderateScale(getResponsiveSize(14)),
-    fontFamily: 'Poppins-SemiBold',
+    fontSize: moderateScale(getResponsiveSize(18)),
+    fontFamily: 'Poppins-Bold',
     color: 'white',
     textAlign: 'center',
     includeFontPadding: false,
@@ -357,7 +344,7 @@ const styles = StyleSheet.create({
   startButton: {
     alignSelf: 'center',
     borderRadius: moderateScale(getResponsiveSize(10)),
-    marginVertical: verticalScale(getResponsiveSize(100)),
+    marginVertical: verticalScale(getResponsiveSize(50)),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -366,15 +353,15 @@ const styles = StyleSheet.create({
     minWidth: scale(getResponsiveSize(200)),
   },
   startButtonTouchable: {
-    paddingVertical: verticalScale(getResponsiveSize(25)),
-    paddingHorizontal: scale(getResponsiveSize(80)),
+    paddingVertical: verticalScale(getResponsiveSize(15)),
+    paddingHorizontal: scale(getResponsiveSize(40)),
     alignItems: 'center',
     justifyContent: 'center',
   },
   startButtonText: {
     fontFamily: 'Poppins-SemiBold',
     color: 'white',
-    fontSize: moderateScale(getResponsiveSize(16)),
+    fontSize: moderateScale(getResponsiveSize(18)),
     textAlign: 'center',
     includeFontPadding: false,
   },

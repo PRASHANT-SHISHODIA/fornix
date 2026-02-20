@@ -675,54 +675,70 @@ const Fornixqbank2 = () => {
   // 🔹 Custom Loader Component
   const CustomLoader = () => {
     const [scaleAnim] = useState(new Animated.Value(1));
-    const [widthAnim] = useState(new Animated.Value(0.3));
+    const [rippleAnim] = useState(new Animated.Value(0)); // Ripple scale
+    const [progress, setProgress] = useState(0);
 
-    // useEffect(() => {
-    //   let animation;
-    //   if (loading) {
-    //     const pulseAnimation = Animated.loop(
-    //       Animated.sequence([
-    //         Animated.timing(scaleAnim, {
-    //           toValue: 1.1,
-    //           duration: 600,
-    //           useNativeDriver: true,
-    //         }),
-    //         Animated.timing(scaleAnim, {
-    //           toValue: 1,
-    //           duration: 600,
-    //           useNativeDriver: true,
-    //         }),
-    //       ]),
-    //     );
-    //     pulseAnimation.start();
+    useEffect(() => {
+      // Pulse animation for the brain icon
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
 
-    //     const widthAnimation = Animated.loop(
-    //       Animated.sequence([
-    //         Animated.timing(widthAnim, {
-    //           toValue: 0.6,
-    //           duration: 600,
-    //           useNativeDriver: false,
-    //         }),
-    //         Animated.timing(widthAnim, {
-    //           toValue: 0.3,
-    //           duration: 600,
-    //           useNativeDriver: false,
-    //         }),
-    //       ]),
-    //     );
-    //     widthAnimation.start();
+      // Ripple animation
+      const ripple = Animated.loop(
+        Animated.parallel([
+          Animated.timing(rippleAnim, {
+            toValue: 1,
+            duration: 1600,
+            useNativeDriver: true,
+          }),
+        ])
+      );
 
-    //     animation = {
-    //       pulse: pulseAnimation,
-    //       width: widthAnimation,
-    //     };
-    //   }
+      pulse.start();
+      ripple.start();
 
-    //   return () => {
-    //     animation?.pulse?.stop();
-    //     animation?.width?.stop();
-    //   };
-    // }, [loading]);
+      // Progress simulation
+      const interval = setInterval(() => {
+        setProgress(oldProgress => {
+          if (oldProgress >= 90) return oldProgress;
+          let increment = 0;
+          if (oldProgress < 30) increment = Math.floor(Math.random() * 5) + 2;
+          else if (oldProgress < 70) increment = Math.floor(Math.random() * 3) + 1;
+          else increment = 1;
+
+          const newProgress = oldProgress + increment;
+          return newProgress > 90 ? 90 : newProgress;
+        });
+      }, 200);
+
+      return () => {
+        clearInterval(interval);
+        pulse.stop();
+        ripple.stop();
+      };
+    }, []);
+
+    const rippleScale = rippleAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 2],
+    });
+
+    const rippleOpacity = rippleAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.6, 0],
+    });
 
     return (
       <View style={styles.loaderContainer}>
@@ -741,36 +757,44 @@ const Fornixqbank2 = () => {
         </LinearGradient>
 
         <View style={styles.loaderContent}>
-          <Animated.View
-            style={[
-              styles.loaderIconContainer,
-              { transform: [{ scale: scaleAnim }] },
-            ]}>
-            <LinearGradient
-              colors={['#F87F16', '#FF9800']}
-              style={styles.loaderIconCircle}>
-              <Icon name="brain" size={moderateScale(40)} color="white" />
-            </LinearGradient>
-          </Animated.View>
-
-          <Text style={styles.loaderMainText}>Preparing Your Medical Quiz</Text>
-          <Text style={styles.loaderSubText}>
-            Fetching questions from server...
-          </Text>
-
-          <View style={styles.progressBarContainer}>
+          <View style={styles.loaderIconContainer}>
+            {/* Ripple Effect */}
             <Animated.View
               style={[
-                styles.progressBar,
+                styles.loaderIconCircle,
                 {
-                  width: widthAnim.interpolate({
-                    inputRange: [0.3, 0.6],
-                    outputRange: ['30%', '60%'],
-                  }),
+                  position: 'absolute',
+                  backgroundColor: '#FF9800', // Lighter orange for ripple
+                  opacity: rippleOpacity,
+                  transform: [{ scale: rippleScale }],
+                  zIndex: -1,
                 },
               ]}
             />
+
+            <Animated.View style={[{ transform: [{ scale: scaleAnim }] }]}>
+              <LinearGradient
+                colors={['#F87F16', '#FF9800']}
+                style={styles.loaderIconCircle}>
+                <Icon name="brain" size={moderateScale(40)} color="white" />
+              </LinearGradient>
+            </Animated.View>
           </View>
+
+          <Text style={styles.loaderMainText}>Preparing Your Medical Quiz</Text>
+          <Text style={styles.loaderSubText}>
+            Fetching questions from server... {progress}%
+          </Text>
+
+          <View style={styles.progressBarContainer}>
+            <View
+              style={[
+                styles.loaderprogessbar,
+                { width: `${progress}%`, marginTop: 0, height: '100%', borderRadius: moderateScale(3) }
+              ]}
+            />
+          </View>
+          <Text style={{ color: '#F87F16', fontFamily: 'Poppins-Bold', marginTop: verticalScale(10) }}>{progress}% Completed</Text>
         </View>
       </View>
     );
@@ -1467,6 +1491,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(30),
   },
   loaderIconCircle: {
+    width: moderateScale(100),
     height: moderateScale(100),
     borderRadius: moderateScale(50),
     justifyContent: 'center',

@@ -17,6 +17,13 @@ import axios from 'axios';
 
 import API from '../API/axiosConfig';
 import useUserStore from '../store/useUserStore';
+import {
+  scale,
+  verticalScale,
+  moderateScale,
+  getResponsiveSize,
+  IS_TABLET,
+} from '../Utils/ResponsiveUtils';
 
 const { width } = Dimensions.get('window');
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -221,46 +228,46 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    paddingTop: '40%',
+    paddingHorizontal: scale(20),
+    paddingBottom: verticalScale(20),
+    paddingTop: verticalScale(140), // Approximating 40% of screen height or just a safe header space
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: moderateScale(12),
     paddingVertical: 0,
-    paddingHorizontal: 12,
+    paddingHorizontal: scale(12),
     width: '100%',
-    marginBottom: 16,
-    height: 50,
+    marginBottom: verticalScale(16),
+    height: verticalScale(50),
   },
   textInput: {
     flex: 1,
     fontFamily: 'Poppins-Medium',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#000000CC',
-    marginLeft: 10,
+    marginLeft: scale(10),
   },
   leftIcon: {
-    marginRight: 5,
+    marginRight: scale(5),
   },
   rightIcon: {
-    padding: 5,
+    padding: scale(5),
   },
   loginButton: {
     backgroundColor: '#1A3848',
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(12),
     width: '100%',
     alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 30,
+    marginBottom: verticalScale(16),
+    marginTop: verticalScale(30),
   },
   loginButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontFamily: 'Poppins-SemiBold',
   },
   canceltext: {
@@ -270,15 +277,13 @@ const styles = StyleSheet.create({
   },
   forgotContainer: {
     alignSelf: 'center',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
-
   forgotText: {
     color: '#1A3848',
     fontFamily: 'Poppins-SemiBold',
-    fontSize: 13,
+    fontSize: moderateScale(13),
   },
-
 });
 
 export default LoginDetail;

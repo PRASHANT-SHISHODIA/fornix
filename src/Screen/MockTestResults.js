@@ -69,7 +69,7 @@ const MockTestResults = ({ route, navigation }) => {
     totalTime: `${minutes}m ${seconds}s`,
     avgTimePerQuestion:
       totalQuestions > 0 ? (timeTaken / totalQuestions).toFixed(1) : 0,
-    category: 'mocktest',
+    category: 'Mock Test',
   };
 
 
@@ -102,7 +102,7 @@ const MockTestResults = ({ route, navigation }) => {
               styles.scorePercentage,
               { fontSize: moderateScale(getResponsiveSize(48)) }
             ]}>
-              {quizData.percentage}%
+              {quizData.percentage}
             </Text>
             <Text style={[
               styles.scoreLabel,
@@ -121,7 +121,7 @@ const MockTestResults = ({ route, navigation }) => {
                 styles.categoryText,
                 { fontSize: moderateScale(getResponsiveSize(14)) }
               ]}>
-                {quizData.category}!
+                {quizData.category}
               </Text>
             </View>
           </View>
@@ -244,7 +244,7 @@ const MockTestResults = ({ route, navigation }) => {
           styles.headerTitle,
           { fontSize: moderateScale(getResponsiveSize(20)) }
         ]}>
-          MockTest Results
+          Mock Test Results
         </Text>
         <View style={styles.headerRight} />
       </View>

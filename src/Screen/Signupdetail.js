@@ -22,6 +22,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import API from '../API/axiosConfig';
 import { Controller, set, useForm } from 'react-hook-form';
 import RazorpayCheckout from 'react-native-razorpay';
+import {
+  scale,
+  verticalScale,
+  moderateScale,
+  getResponsiveSize,
+  IS_TABLET,
+  SCREEN_WIDTH,
+  SCREEN_HEIGHT
+} from '../Utils/ResponsiveUtils';
 
 
 
@@ -74,12 +83,6 @@ const countries = [
     name: 'France',
     dial_code: '+33',
     flag: 'https://flagcdn.com/w320/fr.png',
-  },
-  {
-    code: 'JP',
-    name: 'Japan',
-    dial_code: '+81',
-    flag: 'https://flagcdn.com/w320/jp.png',
   },
   {
     code: 'CN',
@@ -294,7 +297,7 @@ const Signupdetail = ({ route }) => {
 
   // Responsive calculations
   const isLandscape = width > height;
-  const isTablet = width >= 768;
+  const isTablet = IS_TABLET;
   const isSmallPhone = width < 375;
 
   // Removed hardcoded fetchPlans for AMC
@@ -386,6 +389,7 @@ const Signupdetail = ({ route }) => {
     try {
       setLoadingCountries(true);
       const response = await API.get('/mobile/countries');
+      console.log("COUNTRY LIST", response.data.data);
 
       if (response.data.success) {
         setQualifiedCountries(response.data.data);
@@ -622,10 +626,10 @@ const Signupdetail = ({ route }) => {
       onPress={() => handleQualifiedCountrySelect(item)}>
       <View style={styles.qualifiedCountryContent}>
         <Text style={styles.qualifiedCountryName}>{item.name}</Text>
-        <Text style={styles.qualifiedCountryCourses}>
+        {/* <Text style={styles.qualifiedCountryCourses}>
           {item.courses_csv?.split(';').slice(0, 3).join(', ')}
           {item.courses_csv?.split(';').length > 3 ? '...' : ''}
-        </Text>
+        </Text> */}
       </View>
       <Icon name="chevron-forward" size={20} color="#666" />
     </TouchableOpacity>
@@ -918,11 +922,11 @@ const Signupdetail = ({ route }) => {
               <View style={styles.buttonContent}>
                 <Icon name="earth-outline" size={20} color="#000" style={styles.leftIcon} />
                 <View style={styles.buttonTextContainer}>
-                  <Text style={styles.buttonLabel}>Select Country for Qualification *</Text>
+                  <Text style={styles.buttonLabel}>Country of Graduation*</Text>
                   {selectedQualifiedCountry ? (
                     <Text style={styles.selectedValue}>{selectedQualifiedCountry.name}</Text>
                   ) : (
-                    <Text style={styles.placeholderText}>Tap to select country</Text>
+                    <Text style={styles.placeholderText}>select country</Text>
                   )}
                 </View>
                 <Icon name="chevron-forward" size={20} color="#666" />
@@ -1483,42 +1487,42 @@ const styles = StyleSheet.create({
   singupcontainer: {
     flex: 1,
     backgroundColor: '#F87F16',
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: scale(20),
+    paddingBottom: verticalScale(40),
   },
   title: {
-    fontSize: 30,
+    fontSize: moderateScale(30),
     fontFamily: 'Poppins-SemiBold',
     color: '#FFF',
-    marginBottom: 15,
-    paddingTop: 35,
+    marginBottom: verticalScale(15),
+    paddingTop: verticalScale(35),
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: moderateScale(12),
     paddingVertical: 0,
-    paddingHorizontal: 12,
-    width: width - 48,
-    marginBottom: 8,
-    height: 50,
+    paddingHorizontal: scale(12),
+    width: width - scale(48),
+    marginBottom: verticalScale(8),
+    height: verticalScale(50),
   },
   qualificationCountryButton: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    width: width - 48,
-    marginBottom: 8,
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: scale(12),
+    width: width - scale(48),
+    marginBottom: verticalScale(8),
   },
   collegeButton: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    width: width - 48,
-    marginBottom: 8,
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: scale(12),
+    width: width - scale(48),
+    marginBottom: verticalScale(8),
   },
   disabledButton: {
     opacity: 0.6,
@@ -1529,22 +1533,22 @@ const styles = StyleSheet.create({
   },
   buttonTextContainer: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: scale(10),
   },
   buttonLabel: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 12,
+    fontSize: moderateScale(12),
     color: '#666',
-    marginBottom: 2,
+    marginBottom: verticalScale(2),
   },
   selectedValue: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 15,
+    fontSize: moderateScale(15),
     color: '#000',
   },
   placeholderText: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 15,
+    fontSize: moderateScale(15),
     color: '#999',
   },
   inputError: {
@@ -1554,48 +1558,48 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontFamily: 'Poppins-Medium',
-    fontSize: 15,
+    fontSize: moderateScale(15),
     color: '#000000CC',
-    marginLeft: 10,
+    marginLeft: scale(10),
   },
   phoneInput: {
     marginLeft: 0,
   },
   leftIcon: {
-    marginRight: 5,
+    marginRight: scale(5),
   },
   rightIcon: {
-    padding: 5,
+    padding: scale(5),
   },
   countrySelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 10,
+    paddingRight: scale(10),
     borderRightWidth: 1,
     borderRightColor: '#E5E5E5',
-    marginRight: 10,
+    marginRight: scale(10),
   },
   flagIcon: {
-    width: 26,
-    height: 20,
-    marginRight: 8,
+    width: scale(26),
+    height: verticalScale(20),
+    marginRight: scale(8),
     borderRadius: 2,
   },
   dialCodeText: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 15,
+    fontSize: moderateScale(15),
     color: '#000000CC',
-    marginRight: 8,
+    marginRight: scale(8),
   },
   genderContainer: {
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   genderLabel: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#FFF',
-    marginBottom: 8,
-    marginLeft: 5,
+    marginBottom: verticalScale(8),
+    marginLeft: scale(5),
   },
   genderOptions: {
     flexDirection: 'row',
@@ -1604,10 +1608,10 @@ const styles = StyleSheet.create({
   genderOption: {
     flex: 1,
     backgroundColor: 'white',
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(12),
     alignItems: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: scale(4),
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -1621,7 +1625,7 @@ const styles = StyleSheet.create({
   },
   genderOptionText: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#000000CC',
   },
   genderOptionTextSelected: {
@@ -1629,11 +1633,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: 'bold',
     fontFamily: 'Poppins-Regular',
-    marginBottom: 8,
-    marginLeft: 5,
+    marginBottom: verticalScale(8),
+    marginLeft: scale(5),
   },
   modalOverlay: {
     flex: 1,
@@ -1644,60 +1648,60 @@ const styles = StyleSheet.create({
   fullModalContainer: {
     flex: 1,
     backgroundColor: 'white',
-    marginTop: 50,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    marginTop: verticalScale(50),
+    borderTopLeftRadius: moderateScale(20),
+    borderTopRightRadius: moderateScale(20),
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: scale(20),
+    paddingVertical: verticalScale(16),
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5',
   },
   modalTitle: {
     fontFamily: 'Poppins-SemiBold',
-    fontSize: 18,
+    fontSize: moderateScale(18),
     color: '#000',
   },
   closeButton: {
-    padding: 4,
+    padding: scale(4),
   },
   modalContent: {
-    padding: 20,
+    padding: scale(20),
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 50,
+    padding: scale(50),
   },
   emptyContainer: {
     alignItems: 'center',
-    padding: 40,
+    padding: verticalScale(40),
   },
   dropdownContainer: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    width: width - 80,
-    maxHeight: 400,
-    padding: 10,
+    borderRadius: moderateScale(12),
+    width: width - scale(80),
+    maxHeight: verticalScale(400),
+    padding: scale(10),
   },
   countryItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: scale(8),
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
   qualifiedCountryItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
+    paddingVertical: verticalScale(16),
+    paddingHorizontal: scale(8),
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -1706,18 +1710,18 @@ const styles = StyleSheet.create({
   },
   qualifiedCountryName: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 16,
+    fontSize: moderateScale(16),
     color: '#000',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   qualifiedCountryCourses: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 12,
+    fontSize: moderateScale(12),
     color: '#666',
   },
   collegeItem: {
-    paddingVertical: 16,
-    paddingHorizontal: 8,
+    paddingVertical: verticalScale(16),
+    paddingHorizontal: scale(8),
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -1726,66 +1730,66 @@ const styles = StyleSheet.create({
   },
   collegeName: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 16,
+    fontSize: moderateScale(16),
     color: '#000',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   collegeCity: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
-    marginBottom: 2,
+    marginBottom: verticalScale(2),
   },
   collegeType: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 12,
+    fontSize: moderateScale(12),
     color: '#888',
     textTransform: 'capitalize',
   },
   countryFlag: {
-    width: 32,
-    height: 24,
-    marginRight: 12,
+    width: scale(32),
+    height: verticalScale(24),
+    marginRight: scale(12),
     borderRadius: 2,
   },
   countryName: {
     flex: 1,
     fontFamily: 'Poppins-Medium',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#000000CC',
   },
   dialCode: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
   },
   nextButton: {
     backgroundColor: '#1A3848',
-    borderRadius: 12,
-    paddingVertical: 12,
-    width: width - 48,
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(12),
+    width: width - scale(48),
     alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 10,
+    marginBottom: verticalScale(16),
+    marginTop: verticalScale(10),
   },
   nextButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontFamily: 'Poppins-SemiBold',
   },
   cancelButton: {
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: verticalScale(2),
   },
   cancelButtonText: {
     color: 'white',
-    fontSize: 15,
+    fontSize: moderateScale(15),
     fontFamily: 'Poppins-Regular',
   },
   container: {
     flex: 1,
     backgroundColor: '#F4F6F8',
-    paddingTop: Platform.OS === 'ios' ? 40 : 20,
+    paddingTop: Platform.OS === 'ios' ? verticalScale(40) : verticalScale(20),
   },
   center: {
     flex: 1,
@@ -1793,45 +1797,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heading: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: '700',
     color: '#1A3848',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
   },
   headingTablet: {
-    fontSize: 28,
-    marginBottom: 20,
+    fontSize: moderateScale(28),
+    marginBottom: verticalScale(20),
   },
   headingSmall: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
   },
   listContent: {
-    paddingBottom: 30,
-    paddingHorizontal: 10,
+    paddingBottom: verticalScale(30),
+    paddingHorizontal: scale(10),
   },
   listContentLandscape: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   listContentTablet: {
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: moderateScale(18),
+    padding: scale(18),
     alignSelf: 'center',
-    marginVertical: 12,
+    marginVertical: verticalScale(12),
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    minHeight: 280,
+    minHeight: verticalScale(280),
   },
   cardMultiColumn: {
-    marginHorizontal: 10,
+    marginHorizontal: scale(10),
   },
   popularCard: {
     borderWidth: 2,
@@ -1839,107 +1843,107 @@ const styles = StyleSheet.create({
   },
   popularBadge: {
     position: 'absolute',
-    top: -12,
-    right: 20,
+    top: verticalScale(-12),
+    right: scale(20),
     backgroundColor: '#4CAF50',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(12),
   },
   popularText: {
     color: '#fff',
-    fontSize: 11,
+    fontSize: moderateScale(11),
     fontWeight: 'bold',
   },
   planName: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '700',
     color: '#1A3848',
   },
   planNameTablet: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
   },
   planNameSmall: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
   },
   duration: {
-    fontSize: 13,
+    fontSize: moderateScale(13),
     color: '#777',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   durationSmall: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 14,
+    marginVertical: verticalScale(14),
   },
   discountPrice: {
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: 'bold',
     color: '#E53935',
-    marginRight: 10,
+    marginRight: scale(10),
   },
   discountPriceTablet: {
-    fontSize: 28,
+    fontSize: moderateScale(28),
   },
   discountPriceSmall: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
   },
   originalPrice: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#999',
     textDecorationLine: 'line-through',
   },
   originalPriceSmall: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
   },
   features: {
-    marginTop: 6,
+    marginTop: verticalScale(6),
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   featureText: {
-    marginLeft: 8,
-    fontSize: 13,
+    marginLeft: scale(8),
+    fontSize: moderateScale(13),
     color: '#333',
   },
   featureTextSmall: {
-    fontSize: 12,
-    marginLeft: 6,
+    fontSize: moderateScale(12),
+    marginLeft: scale(6),
   },
   buyBtn: {
     backgroundColor: '#1A3848',
-    paddingVertical: 14,
-    borderRadius: 14,
-    marginTop: 16,
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(14),
+    marginTop: verticalScale(16),
   },
   buyBtnTablet: {
-    paddingVertical: 16,
+    paddingVertical: verticalScale(16),
   },
   buyText: {
     color: '#fff',
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: moderateScale(15),
     fontWeight: '600',
   },
   buyTextTablet: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
   },
   freeButtonWrapper: {
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: verticalScale(20),
   },
 
   freeButton: {
     width: '70%',           // ✅ responsive
-    height: 48,
+    height: verticalScale(48),
     backgroundColor: '#000',
-    borderRadius: 10,
+    borderRadius: moderateScale(10),
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
@@ -1947,7 +1951,7 @@ const styles = StyleSheet.create({
 
   freeButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontFamily: 'Poppins-SemiBold',
   },
   modalOverlay: {
@@ -1958,13 +1962,13 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
+    padding: scale(20),
+    borderRadius: moderateScale(10),
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 10,
-    fontSize: 16,
+    marginTop: verticalScale(10),
+    fontSize: moderateScale(16),
     color: '#1A3848',
     fontWeight: '600',
   },

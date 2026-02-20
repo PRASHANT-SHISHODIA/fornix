@@ -13,6 +13,7 @@ import {
   Modal,
   Alert,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
@@ -20,7 +21,15 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import API from '../API/axiosConfig';
 
-const { width, height } = Dimensions.get('window');
+import {
+  scale,
+  verticalScale,
+  moderateScale,
+  getResponsiveSize,
+  SCREEN_WIDTH as width,
+  SCREEN_HEIGHT as height,
+  IS_TABLET,
+} from '../Utils/ResponsiveUtils';
 
 /* -------------------- CONSTANTS -------------------- */
 
@@ -257,7 +266,7 @@ const AiBot = () => {
         <Text style={styles.sender}>
           {item.isUser ? 'You' : 'AI'} • {formatTime(item.timestamp)}
         </Text>
-        <Text style={styles.messageText}>{item.text}</Text>
+        <Text style={[styles.messageText, { color: item.isUser ? '#FFFFFF' : '#1E293B' }]}>{item.text}</Text>
       </View>
     </View>
   ), []);
@@ -274,20 +283,21 @@ const AiBot = () => {
 
   /* -------------------- UI -------------------- */
   return (
-    <LinearGradient colors={['#0F172A', '#1E293B']} style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#F87F16" barStyle="light-content" />
       <SafeAreaView style={{ flex: 1 }}>
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>AI Assistant</Text>
+          <Text style={styles.headerTitle}>FORNIX AI</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity onPress={() => { fetchSessions(); setShowSessionsModal(true); }}>
-              <Text style={styles.headerIcon}>⌚</Text>
+              <Ionicons name="time-outline" size={24} color="#fff" style={{ marginLeft: 12 }} />
             </TouchableOpacity>
             <TouchableOpacity onPress={clearChat}>
-              <Text style={styles.headerIcon}>🗑️</Text>
+              <Ionicons name="trash-outline" size={24} color="#fff" style={{ marginLeft: 12 }} />
             </TouchableOpacity>
           </View>
         </View>
@@ -295,6 +305,7 @@ const AiBot = () => {
         {/* CHAT */}
         <FlatList
           ref={flatListRef}
+          style={{ flex: 1 }}
           data={messages}
           renderItem={renderMessage}
           keyExtractor={item => item.id}
@@ -306,15 +317,15 @@ const AiBot = () => {
 
         {/* INPUT */}
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={80}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
         >
           <View style={styles.inputRow}>
             <TextInput
               value={inputText}
               onChangeText={setInputText}
               placeholder="Type a message..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="#64748B"
               style={styles.input}
               multiline
             />
@@ -351,26 +362,33 @@ const AiBot = () => {
           </View>
         </Modal>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };
 
 /* -------------------- STYLES -------------------- */
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#F5F5F5' },
   header: {
+    backgroundColor: '#F87F16',
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10
+    marginBottom: verticalScale(getResponsiveSize(20)),
+    paddingBottom: verticalScale(getResponsiveSize(30)),
+    borderBottomLeftRadius: scale(getResponsiveSize(30)),
+    borderBottomRightRadius: scale(getResponsiveSize(30)),
+    height: verticalScale(getResponsiveSize(120)),
+    paddingTop: verticalScale(getResponsiveSize(40)),
   },
   headerTitle: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: moderateScale(getResponsiveSize(22)),
     fontWeight: 'bold',
     flex: 1,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   headerActions: {
     flexDirection: 'row',
@@ -382,41 +400,45 @@ const styles = StyleSheet.create({
     width: 80,
     justifyContent: 'center',
   },
-  headerIcon: {
-    fontSize: 22,
-    marginLeft: 12,
-  },
+
   messageContainer: { marginBottom: 12 },
   userAlign: { alignItems: 'flex-end' },
   botAlign: { alignItems: 'flex-start' },
   messageBubble: {
-    maxWidth: '80%',
+    maxWidth: IS_TABLET ? '60%' : '80%',
     padding: 12,
     borderRadius: 16,
   },
-  userBubble: { backgroundColor: '#8B5CF6' },
-  botBubble: { backgroundColor: '#1E293B' },
+  userBubble: { backgroundColor: '#F87F16' },
+  botBubble: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
   sender: {
     fontSize: 11,
-    color: '#CBD5F5',
+    color: '#64748B',
     marginBottom: 4,
   },
-  messageText: { color: '#fff', fontSize: 15 },
+  messageText: { fontSize: 15 },
   inputRow: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: '#020617',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
   },
   input: {
     flex: 1,
-    color: '#fff',
+    color: '#1E293B',
     padding: 12,
-    backgroundColor: '#334155',
+    backgroundColor: '#F1F5F9',
     borderRadius: 20,
+    fontFamily: 'Poppins-Regular',
   },
   sendButton: {
     marginLeft: 10,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#F87F16',
     width: 48,
     height: 48,
     borderRadius: 24,
@@ -426,29 +448,31 @@ const styles = StyleSheet.create({
   sendText: { color: '#fff', fontSize: 20 },
   modal: {
     flex: 1,
-    backgroundColor: '#020617',
+    backgroundColor: '#FFFFFF',
     padding: 20,
     marginTop: 80,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
   modalTitle: {
-    color: '#fff',
+    color: '#1E293B',
     fontSize: 22,
     marginBottom: 16,
+    fontFamily: 'Poppins-Bold',
   },
   sessionItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: '#E2E8F0',
   },
-  sessionTitle: { color: '#fff', fontSize: 16 },
-  sessionDate: { color: '#94A3B8', fontSize: 12 },
+  sessionTitle: { color: '#1E293B', fontSize: 16, fontFamily: 'Poppins-Medium' },
+  sessionDate: { color: '#64748B', fontSize: 12, fontFamily: 'Poppins-Regular' },
   close: {
-    color: '#8B5CF6',
+    color: '#F87F16',
     textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
   },
 });
 

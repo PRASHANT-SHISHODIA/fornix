@@ -65,13 +65,10 @@ const Quizpage = () => {
   const initTest = async () => {
     try {
       setLoading(true);
-
       const userId = await AsyncStorage.getItem('user_id');
-
       console.log('🧠 MODE:', mode);
       console.log('🧪 TEST ID:', testId);
       console.log('👤 USER ID:', userId);
-
       if (!userId || !testId) {
         Alert.alert('Error', 'User ID or Test ID missing');
         return;
@@ -278,7 +275,7 @@ const Quizpage = () => {
 
         <View style={styles.navigationContainer}>
           <TouchableOpacity style={styles.navButton} onPress={goPrevious}>
-            <Text style={styles.navButtonText}>Previous</Text>
+            <Text style={styles.navButtonTextp}>Previous</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -380,6 +377,10 @@ const styles = StyleSheet.create({
     borderColor: '#1A3848',
   },
   navButtonText: {
+    color: '#fff',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  navButtonTextp: {
     color: '#000',
     fontFamily: 'Poppins-SemiBold',
   },

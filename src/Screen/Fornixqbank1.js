@@ -1,5 +1,5 @@
 // QBankQuestionScreen.js
-import React, {useRef, useEffect, useState} from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,11 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import Icon1 from 'react-native-vector-icons/Ionicons';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 // Screen dimensions
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 // 🔹 Responsive scaling
 const scale = size => (width / 375) * size;
@@ -62,10 +62,10 @@ const Fornixqbank1 = () => {
     question:
       ' Q8. Which chamber of the heart receives oxygenated blood from the lungs?',
     options: [
-      {id: 'A', text: 'Right atrium'},
-      {id: 'B', text: 'Left atrium'},
-      {id: 'C', text: 'Right ventricle'},
-      {id: 'D', text: 'Left ventricle'},
+      { id: 'A', text: 'Right atrium' },
+      { id: 'B', text: 'Left atrium' },
+      { id: 'C', text: 'Right ventricle' },
+      { id: 'D', text: 'Left ventricle' },
     ],
     correctAnswer: 'B',
   };
@@ -88,7 +88,7 @@ const Fornixqbank1 = () => {
     <View
       style={[
         styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}>
       <StatusBar backgroundColor="#F5F5F5" barStyle="dark-content" />
 
@@ -135,7 +135,7 @@ const Fornixqbank1 = () => {
                     style={[
                       styles.optionCircle,
                       selectedOption === option.id &&
-                        styles.optionCircleSelected,
+                      styles.optionCircleSelected,
                     ]}>
                     <Text
                       style={[
@@ -222,12 +222,12 @@ const styles = StyleSheet.create({
     height: verticalScale(getResponsiveSize(170)),
     borderBottomLeftRadius: scale(getResponsiveSize(400)),
     borderBottomRightRadius: scale(getResponsiveSize(400)),
-    transform: [{scaleX: getHeaderTransform()}],
+    transform: [{ scaleX: getHeaderTransform() }],
   },
   searchContainer: {
     paddingHorizontal: scale(getResponsiveSize(50)),
     paddingVertical: verticalScale(getResponsiveSize(20)),
-    transform: [{scaleX: getSearchTransform()}],
+    transform: [{ scaleX: getSearchTransform() }],
     paddingTop: verticalScale(getResponsiveSize(60)),
   },
   headerRow: {
@@ -262,12 +262,12 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(getResponsiveSize(16)),
     padding: scale(getResponsiveSize(20)),
     marginBottom: verticalScale(getResponsiveSize(30)),
-    
+
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
-  
+
   },
   questionHeader: {
     flexDirection: 'row',

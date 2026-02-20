@@ -20,45 +20,24 @@ import axios from 'axios';
 import { useRoute } from '@react-navigation/native';
 import Course from './Course';
 
-// Screen dimensions
-const { width, height } = Dimensions.get('window');
-
-// 🔹 Responsive scaling
-const scale = size => (width / 375) * size;
-const verticalScale = size => (height / 812) * size;
-const moderateScale = (size, factor = 0.5) =>
-  size + (scale(size) - size) * factor;
-
-// 🔹 Responsive size function based on screen width
-const getResponsiveSize = (size) => {
-  if (width < 375) { // Small phones
-    return size * 0.85;
-  } else if (width > 414) { // Large phones
-    return size * 1.15;
-  }
-  return size; // Normal phones
-};
-
-// 🔹 Get responsive transform values for header
-const getHeaderTransform = () => {
-  if (width < 375) return 1.6; // Small phones
-  if (width > 414) return 1.8; // Large phones
-  return 1.7; // Normal phones
-};
-
-// 🔹 Get responsive search container transform
-const getSearchTransform = () => {
-  if (width < 375) return 0.62; // Small phones
-  if (width > 414) return 0.55; // Large phones
-  return 0.58; // Normal phones
-};
+import {
+  scale,
+  verticalScale,
+  moderateScale,
+  getResponsiveSize,
+  getGridColumns,
+  getHeaderTransform,
+  getSearchTransform,
+  SCREEN_WIDTH as width,
+  SCREEN_HEIGHT as height,
+} from '../Utils/ResponsiveUtils';
 
 const Qbanksubject = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [subject, setSubject] = useState([]);
   const [loading, setLoading] = useState(true);
-  const bookAnim = useRef(new Animated.Value(0)).current;
+
   const route = useRoute();
   const mood = route?.params?.mood ?? null;
   console.log('MOOD RECEVID IN QBANKSSUBJECT :', mood?.title)
@@ -110,42 +89,7 @@ const Qbanksubject = () => {
   console.log('IS AMC COURSE:', isAMC);
 
 
-  // 🔹 Blink animation for upgrade button
-  const blinkAnim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (loading) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(bookAnim, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(bookAnim, {
-            toValue: 0,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    }
-  }, [loading, bookAnim]);
-  const leftPageRotate = bookAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '-30deg'],
-  });
 
-  const rightPageRotate = bookAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '30deg'],
-  });
-
-
-
-  const backgroundColor = blinkAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#1A3848', '#F87F16'],
-  });
 
 
   const getSubjectsByCourse = async (courseId) => {
@@ -189,28 +133,47 @@ const Qbanksubject = () => {
   }, [selectedCourse]);
 
 
-  const BookLoader = () => {
+  const SkeletonItem = () => {
+    const opacity = useRef(new Animated.Value(0.3)).current;
+
+    useEffect(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(opacity, {
+            toValue: 0.7,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0.3,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, []);
+
     return (
-      <View style={styles.loaderContainer}>
-        <View style={styles.book}>
-          <Animated.View
-            style={[
-              styles.page,
-              { transform: [{ rotateY: leftPageRotate }] },
-            ]}
-          />
-          <Animated.View
-            style={[
-              styles.page,
-              styles.rightPage,
-              { transform: [{ rotateY: rightPageRotate }] },
-            ]}
-          />
+      <View style={styles.skeletonCard}>
+        <View style={styles.featureContent}>
+          <View style={styles.featureIconContainer}>
+            <Animated.View style={[styles.skeletonCircle, { opacity }]} />
+          </View>
+          <View style={styles.textContainer}>
+            <Animated.View style={[styles.skeletonBar, { opacity, width: '70%' }]} />
+          </View>
         </View>
-        <Text style={styles.loadingText}>Loading Subjects...</Text>
       </View>
     );
   };
+
+  const SkeletonGrid = () => (
+    <>
+      {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
+        <SkeletonItem key={item} />
+      ))}
+    </>
+  );
 
   return (
     <View
@@ -218,7 +181,7 @@ const Qbanksubject = () => {
         styles.container,
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}>
-      <StatusBar backgroundColor="#F5F5F5" barStyle="dark-content" />
+      <StatusBar backgroundColor="#F87F16" barStyle="light-content" />
 
       <ScrollView
         style={styles.scrollView}
@@ -245,7 +208,7 @@ const Qbanksubject = () => {
         {/* 🔹 Subject Grid */}
         <View style={styles.featuresGrid}>
           {loading ? (
-            <BookLoader />
+            <SkeletonGrid />
           ) : (
             subject?.map(sub => (
               <TouchableOpacity
@@ -280,7 +243,7 @@ const Qbanksubject = () => {
                         resizeMode="contain"
                       />
                     ) : (
-                      <Icon name="book" size={22} color="#1A3848" />
+                      <Icon name="book" size={30} color="#FFFFFF" />
                     )}
                   </View>
                   <View style={styles.textContainer}>
@@ -351,7 +314,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(getResponsiveSize(30)),
   },
   featureCard: {
-    width: (width - scale(getResponsiveSize(60))) / 2,
+    width: (width - scale(getResponsiveSize(50))) / getGridColumns(),
     backgroundColor: '#1A3848',
     borderRadius: moderateScale(getResponsiveSize(16)),
     paddingHorizontal: scale(getResponsiveSize(15)),
@@ -364,6 +327,17 @@ const styles = StyleSheet.create({
     elevation: 3,
     minHeight: verticalScale(getResponsiveSize(80)),
   },
+  skeletonCard: {
+    width: (width - scale(getResponsiveSize(50))) / getGridColumns(),
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(getResponsiveSize(16)),
+    paddingHorizontal: scale(getResponsiveSize(15)),
+    marginBottom: verticalScale(getResponsiveSize(20)),
+    paddingVertical: verticalScale(getResponsiveSize(10)),
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    minHeight: verticalScale(getResponsiveSize(80)),
+  },
   featureContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -373,7 +347,7 @@ const styles = StyleSheet.create({
   featureIconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: scale(getResponsiveSize(10)),
+    // marginLeft: scale(getResponsiveSize(10)), // Removed gap
   },
   textContainer: {
     flex: 1,
@@ -384,9 +358,9 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(getResponsiveSize(13)),
     fontFamily: 'Poppins-SemiBold',
     color: 'white',
-    marginTop: '12%',
+    // marginTop: '12%', // Removed margin top to align center
     includeFontPadding: false,
-    textAlign: 'center',
+    // textAlign: 'center', // Changed to left for better layout with circle icon
   },
   upgradeButton: {
     alignSelf: 'center',
@@ -402,42 +376,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     includeFontPadding: false,
   },
-  loaderContainer: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: verticalScale(40),
+  skeletonCircle: {
+    width: scale(getResponsiveSize(60)),
+    height: scale(getResponsiveSize(60)),
+    borderRadius: scale(getResponsiveSize(30)),
+    backgroundColor: '#E0E0E0',
   },
-
-  book: {
-    flexDirection: 'row',
-    width: 80,
-    height: 60,
-    marginBottom: 15,
-  },
-
-  page: {
-    width: 40,
-    height: 60,
-    backgroundColor: '#F87F16',
-    borderTopLeftRadius: 6,
-    borderBottomLeftRadius: 6,
-  },
-
-  rightPage: {
-    backgroundColor: '#1A3848',
-    borderTopRightRadius: 6,
-    borderBottomRightRadius: 6,
-  },
-
-  loadingText: {
-    fontSize: 14,
-    color: '#1A3848',
-    fontFamily: 'Poppins-Medium',
+  skeletonBar: {
+    height: verticalScale(getResponsiveSize(20)),
+    borderRadius: 4,
+    backgroundColor: '#E0E0E0',
   },
   subjectIcon: {
-    width: scale(getResponsiveSize(35)),
-    height: scale(getResponsiveSize(35)),
+    width: scale(getResponsiveSize(80)),
+    height: scale(getResponsiveSize(80)),
+    borderRadius: scale(getResponsiveSize(80)), // Made circular
   },
 
 

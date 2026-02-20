@@ -39,13 +39,13 @@ const getHeaderTransform = () => {
 
 /* Course Data with more details */
 const CourseData = [
-  { 
-    id: 1, 
-    title: 'NEET UG', 
+  {
+    id: 1,
+    title: 'NEET UG',
     subtitle: 'Medical Entrance',
     icon: 'stethoscope',
     color: '#4CAF50',
-    monthly: '$49/month', 
+    monthly: '$49/month',
     yearly: '$299/year',
     savings: 'Save 49%',
     features: [
@@ -56,13 +56,13 @@ const CourseData = [
       'Mock Test Series'
     ]
   },
-  { 
-    id: 2, 
-    title: 'NEET PG', 
+  {
+    id: 2,
+    title: 'NEET PG',
     subtitle: 'Post Graduate Medical',
     icon: 'user-md',
     color: '#2196F3',
-    monthly: '$49/month', 
+    monthly: '$49/month',
     yearly: '$199/year',
     savings: 'Save 66%',
     features: [
@@ -73,13 +73,13 @@ const CourseData = [
       'Expert Guidance'
     ]
   },
-  { 
-    id: 3, 
-    title: 'AMC', 
+  {
+    id: 3,
+    title: 'AMC',
     subtitle: 'Australian Medical Council',
     icon: 'globe-asia',
     color: '#FF9800',
-    monthly: '$79/month', 
+    monthly: '$79/month',
     yearly: '$299/year',
     savings: 'Save 68%',
     features: [
@@ -90,13 +90,13 @@ const CourseData = [
       'Australian Guidelines'
     ]
   },
-  { 
-    id: 4, 
-    title: 'FMGE', 
+  {
+    id: 4,
+    title: 'FMGE/NExT',
     subtitle: 'Foreign Medical Graduates',
     icon: 'graduation-cap',
     color: '#9C27B0',
-    monthly: '$149/month', 
+    monthly: '$149/month',
     yearly: '$299/year',
     savings: 'Save 83%',
     features: [
@@ -124,7 +124,7 @@ const Course = () => {
   const renderPlanCard = (item, planType) => {
     const isSelected = selectedPlan[item.id] === planType;
     const isMonthly = planType === 'monthly';
-    
+
     return (
       <TouchableOpacity
         onPress={() => handleSelect(item.id, planType)}
@@ -150,7 +150,7 @@ const Course = () => {
               {isMonthly ? item.monthly : item.yearly}
             </Text>
           </View>
-          
+
           <View style={[
             styles.selectionIndicator,
             isSelected ? styles.selectedIndicator : styles.unselectedIndicator
@@ -206,18 +206,18 @@ const Course = () => {
         ]}
       >
         <View style={styles.headerContent}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Icon name="arrow-left" size={20} color="white" />
           </TouchableOpacity>
-          
+
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>Choose Your Course</Text>
             <Text style={styles.headerSubtitle}>Select a plan that fits your goals</Text>
           </View>
-          
+
           <View style={styles.helpButton}>
             <Icon name="question-circle" size={20} color="white" />
           </View>
@@ -341,7 +341,7 @@ const Course = () => {
             <Text style={styles.faqQuestion}>Can I switch plans later?</Text>
           </View>
           <Text style={styles.faqAnswer}>Yes, you can upgrade or downgrade at any time.</Text>
-          
+
           <View style={styles.faqItem}>
             <Icon name="question-circle" size={16} color="#F87F16" />
             <Text style={styles.faqQuestion}>Is there a free trial?</Text>
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft:25,
+    marginLeft: 25,
   },
   headerTextContainer: {
     flex: 1,
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight:25,
+    marginRight: 25,
   },
   infoBanner: {
     flexDirection: 'row',
