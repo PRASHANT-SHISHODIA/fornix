@@ -232,7 +232,6 @@ const Qbanksubject = () => {
                     });
                   }
                 }}
-
               >
                 <View style={styles.featureContent}>
                   <View style={styles.featureIconContainer}>
