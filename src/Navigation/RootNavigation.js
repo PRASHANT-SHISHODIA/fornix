@@ -43,6 +43,7 @@ import CheckAttemptedTest from '../Screen/CheckAttemptedTest';
 import AiBot from '../Screen/AiBot';
 import AIChatSessionsScreen from '../Screen/AIChatSessionsScreen';
 import ForgotPassword from '../Screen/ForgotPassword';
+import UniversityExams from '../Screen/UniversityExams';
 // import { configureGoogle } from '../Screen/GoogleConfig';
 
 
@@ -261,6 +262,11 @@ function RootNavigation() {
         <Stack.Screen
           name='AIChatSessionsScreen'
           component={AIChatSessionsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name='UniversityExams'
+          component={UniversityExams}
           options={{ headerShown: false }}
         />
 

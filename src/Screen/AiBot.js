@@ -77,26 +77,28 @@ const AiBot = () => {
   const [showSessionsModal, setShowSessionsModal] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [courseName, setCourseName] = useState('AMC');
 
-
-
-  const USER_ID = userId
-  const COURSE_NAME = 'AMC';
   const STORAGE_KEY = 'ai_chat_session_id';
   /* -------------------- EFFECTS -------------------- */
 
   useEffect(() => {
-    console.log(userId)
-    console.log(loadSavedSession());
+    loadSavedSession();
   }, []);
 
   const loadSavedSession = async () => {
-    const [savedSessionId, savedUserId] = await Promise.all([
+    const [savedSessionId, savedUserId, savedCourseData] = await Promise.all([
       AsyncStorage.getItem(STORAGE_KEY),
       AsyncStorage.getItem('user_id'),
+      AsyncStorage.getItem('selectedCourse'),
     ]);
+
     if (savedSessionId) setSessionId(savedSessionId);
     if (savedUserId) setUserId(savedUserId);
+    if (savedCourseData) {
+      const parsed = JSON.parse(savedCourseData);
+      if (parsed.courseName) setCourseName(parsed.courseName);
+    }
   };
 
   const saveSessionId = async id => {
@@ -189,7 +191,7 @@ const AiBot = () => {
         '/chat/send',
         {
           user_id: currentUserId,
-          course_name: COURSE_NAME,
+          course_name: courseName,
           query: userMessage.text,
           session_id: sessionId,
         }

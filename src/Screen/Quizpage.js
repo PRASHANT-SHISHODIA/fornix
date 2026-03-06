@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import API from '../API/axiosConfig';
 import MockTest from './MockTest';
 import Icon1 from 'react-native-vector-icons/Ionicons';
 
@@ -86,12 +87,23 @@ const Quizpage = () => {
   const initTest = async () => {
     try {
       setLoading(true);
+
+      // ✅ PRE-FILLED QUESTIONS (e.g., University Exams)
+      if (route.params?.questions && route.params?.questions.length > 0) {
+        setQuestions(route.params.questions);
+        setAttemptId(route.params.attemptId || null);
+        setLoading(false);
+        return;
+      }
+
       const userId = await AsyncStorage.getItem('user_id');
       console.log('🧠 MODE:', mode);
       console.log('🧪 TEST ID:', testId);
       console.log('👤 USER ID:', userId);
+
       if (!userId || !testId) {
         Alert.alert('Error', 'User ID or Test ID missing');
+        setLoading(false);
         return;
       }
 
@@ -185,6 +197,7 @@ const Quizpage = () => {
     try {
       setSubmitting(true);
       const userId = await AsyncStorage.getItem('user_id');
+      const token = await AsyncStorage.getItem('token');
 
       if (!userId) {
         Alert.alert("Error", "User Not Found");
@@ -193,30 +206,41 @@ const Quizpage = () => {
 
       const payload = {
         user_id: userId,
+        attempt_id: attemptId,
         answers: buildSubmitPayload(),
         time_taken_seconds: totalTimeTaken,
       };
-      console.log(' Submit Payload', payload);
 
-      const res = await axios.post(
-        `${START_TEST_API}/${testId}/submit`,
-        payload,
-      );
+      console.log('Submit Payload:', JSON.stringify(payload, null, 2));
+
+      let endpoint = '';
+      if (route.params?.mode === 'university_exam') {
+        endpoint = '/university-exams/submit';
+      } else {
+        endpoint = `/mobile/mock-tests/${testId}/submit`;
+      }
+
+      const res = await API.post(endpoint, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       console.log('SUBMIT RESPONSE:', res.data);
 
       if (res.data?.success) {
-        const resultData = res.data.result;
+        const resultData = res.data.result || res.data.data;
         navigation.navigate('MockTestResults', {
-          source: 'mocktest',
+          source: route.params?.mode === 'university_exam' ? 'university' : 'mocktest',
           result: resultData,
           questions: questions,
         });
       } else {
-        Alert.alert('Error', "Mock Submission failed");
+        Alert.alert('Error', "Submission failed");
       }
     } catch (error) {
-      console.log("SUBMIT ERROR", error?.response || error);
-      Alert.alert("Error", 'Something went wrong while Submitting Mock');
+      console.log("SUBMIT ERROR:", error?.response?.data || error);
+      Alert.alert("Error", 'Something went wrong while Submitting');
     } finally {
       setSubmitting(false);
     }

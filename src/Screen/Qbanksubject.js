@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useRoute } from '@react-navigation/native';
 import Course from './Course';
+import API from '../API/axiosConfig';
 
 import {
   scale,
@@ -46,15 +47,8 @@ const Qbanksubject = () => {
   console.log("COURSE IN THE", selectedCourse)
 
 
-  // 🔹 Subject list (with navigation routes)
-  const subjects = [
-    { id: '1', title: 'Anatomy', icon: 'user-md', route: 'Subjectdetail' },
-    { id: '2', title: 'Biochemistry', icon: 'flask', route: 'BiochemistryScreen' },
-    { id: '3', title: 'Microbiology', icon: 'microscope', route: 'MicrobiologyScreen' },
-    { id: '4', title: 'Physiology', icon: 'heartbeat', route: 'PhysiologyScreen' },
-    { id: '5', title: 'Pathology', icon: 'vials', route: 'PathologyScreen' },
-    { id: '6', title: 'Pharmacology', icon: 'pills', route: 'PharmacologyScreen' },
-  ];
+  // 🔹 Subject list removed (handled by API)
+
 
   useEffect(() => {
     const loadCourse = async () => {
@@ -64,21 +58,27 @@ const Qbanksubject = () => {
 
         if (courseData) {
           courseObj = JSON.parse(courseData);
+          console.log('✅ Found course in AsyncStorage:', courseObj);
         } else if (route.params?.courseId || route.params?.Course) {
-          // Fallback to route params
           courseObj = {
             courseId: route.params.courseId || route.params.Course,
             courseName: route.params.courseName || 'Selected Course',
           };
+          console.log('✅ Found course in Route Params:', courseObj);
         }
 
         if (courseObj) {
           setSelectedCourse(courseObj);
-          console.log('Course loaded:', courseObj);
-          getSubjectsByCourse(courseObj.courseId || courseObj.id);
+          const finalId = courseObj.courseId || courseObj.id;
+          console.log('🎯 Final courseId to use:', finalId);
+          getSubjectsByCourse(finalId);
+        } else {
+          console.log('⚠️ No course found in Storage or Params');
+          setLoading(false);
         }
       } catch (e) {
-        console.log('Error loading course:', e);
+        console.log('❌ Error loading course:', e);
+        setLoading(false);
       }
     };
 
@@ -93,19 +93,53 @@ const Qbanksubject = () => {
 
 
   const getSubjectsByCourse = async (courseId) => {
+    let finalId = courseId;
+
+    if (!finalId) {
+      console.log('⚠️ courseId missing in getSubjectsByCourse, trying to fetch from Profile...');
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const userId = await AsyncStorage.getItem("user_id");
+
+        if (token && userId) {
+          const res = await API.post("/user/get", { id: userId });
+          if (res.data?.success && res.data?.subscriptions?.length > 0) {
+            // Pick first active subscription's course
+            const activeSub = res.data.subscriptions.find(s => s.is_active);
+            if (activeSub) {
+              finalId = activeSub.course_id || activeSub.course?.id;
+              console.log('✅ Found courseId from User Profile:', finalId);
+              // Update state for visual consistency
+              setSelectedCourse({
+                courseId: finalId,
+                courseName: activeSub.course?.name || 'Selected Course'
+              });
+            }
+          }
+        }
+      } catch (profileError) {
+        console.log('❌ Failed to fetch fallback course from profile:', profileError);
+      }
+    }
+
+    if (!finalId) {
+      console.log('❌ Skipping SUBJECT API: Still no courseId found');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('token');
 
-      const response = await axios.post(
-        'https://fornix-medical.vercel.app/api/v1/subjects',
+      const response = await API.post(
+        '/subjects',
         {
-          course_id: courseId, // ✅ dynamic
+          course_id: finalId,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
           },
         }
       );
@@ -216,12 +250,12 @@ const Qbanksubject = () => {
                 style={styles.featureCard}
                 onPress={() => {
                   if (isAMC) {
-                    // 🔹 AMC → Mood flow
-                    navigation.navigate('Mood', {
+                    // 🔹 AMC → Chapterwise flow (New Flow)
+                    navigation.navigate('Chapterwise', {
                       subjectId: sub.id,
                       subjectName: sub.name,
                       Course: selectedCourse,
-                      from: 'qBankSubject',
+                      isAMC: true,
                     });
                   } else {
                     // 🔹 All other courses → QBank flow

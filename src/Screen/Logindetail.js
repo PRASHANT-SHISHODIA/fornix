@@ -96,6 +96,18 @@ const LoginDetail = () => {
         if (data.user.profile_picture) {
           useUserStore.getState().setProfilePicture(data.user.profile_picture);
         }
+
+        // 🔥 SAVE ENROLLED COURSE FROM SERVER IF AVAILABLE
+        // if (data.enrolled_course) {
+        //   await AsyncStorage.setItem(
+        //     'selectedCourse',
+        //     JSON.stringify({
+        //       courseId: data.enrolled_course.course_id,
+        //       courseName: data.enrolled_course.course_name,
+        //     })
+        //   );
+        // }
+
         // 🔥 READ COURSE SELECTION
         const selectedCourse = await getSelectedCourseFromStorage();
 
@@ -114,10 +126,6 @@ const LoginDetail = () => {
             routes: [{ name: 'TabNavigation' }],
           });
         }
-
-
-        // Alert.alert('Success', 'Login successful!');
-        // navigation.navigate('TabNavigation');
       } else {
         Alert.alert('Invalid Credentials', data.message || 'Try again.');
       }

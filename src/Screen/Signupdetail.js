@@ -39,6 +39,7 @@ const { width } = Dimensions.get('window');
 
 const API_URL = 'https://fornix-medical.vercel.app/api/v1/mobile/courses';
 const RAZORPAY_KEY = 'rzp_live_SFWxjzUjAY5PC6';
+// const RAZORPAY_KEY = 'rzp_test_SFWxjzUjAY5PC6';
 
 // Original country data (for phone codes only)
 const countries = [
@@ -158,6 +159,14 @@ const countries = [
   },
 ];
 
+const academicYears = [
+  '1st Year',
+  '2nd Year',
+  '3rd Year',
+  '4th Year',
+  '5th Year',
+];
+
 const Signupdetail = ({ route }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -177,6 +186,7 @@ const Signupdetail = ({ route }) => {
   const [institute, setInstitute] = useState('');
   const [qualification, setQualification] = useState('');
   const [gender, setGender] = useState('');
+  const [academicYear, setAcademicYear] = useState('');
 
   // Validation state
   const [errorFields, setErrorFields] = useState({
@@ -220,6 +230,8 @@ const Signupdetail = ({ route }) => {
   const [isQualifiedCountryModalVisible, setQualifiedCountryModalVisible] = useState(false);
   const [isCollegeModalVisible, setCollegeModalVisible] = useState(false);
   const [loadingCountries, setLoadingCountries] = useState(false);
+  const [collegeSearchQuery, setCollegeSearchQuery] = useState('');
+  const [isAcademicYearModalVisible, setAcademicYearModalVisible] = useState(false);
   const [user, setUser] = useState(null);
 
   // Courses
@@ -252,7 +264,8 @@ const Signupdetail = ({ route }) => {
       "amount": null,
       "transaction_mode": null,
       "transaction_status": null,
-      "payment_date": null
+      "payment_date": null,
+      "academic_year": null,
 
 
     }
@@ -323,6 +336,8 @@ const Signupdetail = ({ route }) => {
         gender: getValues("gender"),
         mobile: getValues("mobile"),
         course_id: selectedCourse.id,
+        course: selectedCourse.name?.toLowerCase() || 'fmge',
+        academic_year: getValues("academic_year"),
       };
 
       console.log("FREE REGISTER PAYLOAD 👉", payload);
@@ -341,10 +356,15 @@ const Signupdetail = ({ route }) => {
           JSON.stringify(response.data.user)
         );
 
-        await AsyncStorage.setItem(
-          "enrolled_course",
-          JSON.stringify(response.data.enrolled_course)
-        );
+        if (response.data.enrolled_course) {
+          await AsyncStorage.setItem(
+            "selectedCourse",
+            JSON.stringify({
+              courseId: response.data.enrolled_course.course_id,
+              courseName: response.data.enrolled_course.course_name,
+            })
+          );
+        }
 
         Alert.alert("Success 🎉", response.data.message, [
           {
@@ -370,7 +390,18 @@ const Signupdetail = ({ route }) => {
   const renderPlan = ({ item }) => (
     <PlanCard
       plan={item}
-      data={{ name: getValues("name") ?? user?.user?.full_name, mobile: getValues("mobile") ?? user?.user?.phone, email: getValues("email") ?? user?.user?.email, country: getValues("country") ?? "India", country_id: getValues('country_id') ?? "3856a7e7-0b14-4e88-a729-bb2bc1913d8d", gender: getValues("gender") ?? user?.user?.gender, password: getValues('password'), college_name: getValues("college_name"), courses: selectedCourse }}
+      data={{
+        name: getValues("name") ?? user?.user?.full_name,
+        mobile: getValues("mobile") ?? user?.user?.phone,
+        email: getValues("email") ?? user?.user?.email,
+        country: getValues("country"),
+        country_id: getValues('country_id'),
+        gender: getValues("gender") ?? user?.user?.gender,
+        password: getValues('password'),
+        college_name: getValues("college_name"),
+        courses: selectedCourse,
+        academic_year: getValues("academic_year")
+      }}
       isTablet={isTablet}
       isLandscape={isLandscape}
       screenWidth={width}
@@ -490,6 +521,7 @@ const Signupdetail = ({ route }) => {
 
     // Auto-open college modal if country has colleges
     if (country.colleges && country.colleges.length > 0) {
+      setCollegeSearchQuery('');
       setCollegeModalVisible(true);
     }
   };
@@ -601,6 +633,11 @@ const Signupdetail = ({ route }) => {
       return;
     }
 
+    if (selectedCourse?.name?.includes('FMGE') && !getValues("academic_year")) {
+      Alert.alert("Required", "Please select academic year");
+      return;
+    }
+
     setNextPage(true);
   };
 
@@ -656,6 +693,18 @@ const Signupdetail = ({ route }) => {
       style={styles.collegeItem}
       onPress={() => handleCourseSelect(item)}>
       <Text style={styles.collegeName}>{item.name}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderAcademicYearItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.collegeItem}
+      onPress={() => {
+        setAcademicYear(item);
+        setValue("academic_year", item);
+        setAcademicYearModalVisible(false);
+      }}>
+      <Text style={styles.collegeName}>{item}</Text>
     </TouchableOpacity>
   );
 
@@ -945,6 +994,7 @@ const Signupdetail = ({ route }) => {
               ]}
               onPress={() => {
                 if (selectedQualifiedCountry) {
+                  setCollegeSearchQuery('');
                   setCollegeModalVisible(true);
                 }
               }}
@@ -993,6 +1043,29 @@ const Signupdetail = ({ route }) => {
             </TouchableOpacity>
             {errorMessages.course ? <Text style={styles.errorText}>{errorMessages.course}</Text> : null}
           </View>
+
+          {/* Academic Year Selection - Only for FMGE */}
+          {selectedCourse?.name?.includes('FMGE') && (
+            <View>
+              <TouchableOpacity
+                style={styles.qualificationCountryButton}
+                onPress={() => setAcademicYearModalVisible(true)}
+              >
+                <View style={styles.buttonContent}>
+                  <Icon name="calendar-outline" size={20} color="#000" style={styles.leftIcon} />
+                  <View style={styles.buttonTextContainer}>
+                    <Text style={styles.buttonLabel}>Select Academic Year *</Text>
+                    {academicYear ? (
+                      <Text style={styles.selectedValue}>{academicYear}</Text>
+                    ) : (
+                      <Text style={styles.placeholderText}>Tap to select year</Text>
+                    )}
+                  </View>
+                  <Icon name="chevron-forward" size={20} color="#666" />
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
           {/* Gender Selection */}
           <View style={styles.genderContainer}>
             <Text style={styles.genderLabel}>Gender *</Text>
@@ -1143,32 +1216,59 @@ const Signupdetail = ({ route }) => {
             </View>
           </Modal>
 
-          {/* Colleges Modal */}
           <Modal
             visible={isCollegeModalVisible}
             transparent={true}
             animationType="slide"
-            onRequestClose={() => setCollegeModalVisible(false)}>
+            onRequestClose={() => {
+              setCollegeSearchQuery('');
+              setCollegeModalVisible(false);
+            }}>
             <View style={styles.fullModalContainer}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
                   Colleges in {selectedQualifiedCountry?.name}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => setCollegeModalVisible(false)}
+                  onPress={() => {
+                    setCollegeSearchQuery('');
+                    setCollegeModalVisible(false);
+                  }}
                   style={styles.closeButton}>
                   <Icon name="close" size={24} color="#000" />
                 </TouchableOpacity>
               </View>
+
+              {/* Search Bar */}
+              <View style={styles.modalSearchContainer}>
+                <Icon name="search" size={20} color="#666" style={styles.modalSearchIcon} />
+                <TextInput
+                  style={styles.modalSearchInput}
+                  placeholder="Search college..."
+                  placeholderTextColor="#999"
+                  value={collegeSearchQuery}
+                  onChangeText={(text) => setCollegeSearchQuery(text)}
+                />
+                {collegeSearchQuery !== '' && (
+                  <TouchableOpacity onPress={() => setCollegeSearchQuery('')}>
+                    <Icon name="close-circle" size={20} color="#999" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
               <FlatList
-                data={selectedQualifiedCountry?.colleges || []}
+                data={(selectedQualifiedCountry?.colleges || []).filter(item =>
+                  item.name.toLowerCase().includes(collegeSearchQuery.toLowerCase())
+                )}
                 renderItem={renderCollegeItem}
                 keyExtractor={item => item.id}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.modalContent}
                 ListEmptyComponent={
                   <View style={styles.emptyContainer}>
-                    <Text>No colleges available for this country</Text>
+                    <Text style={styles.emptyTextModal}>
+                      {collegeSearchQuery ? `No colleges found matching "${collegeSearchQuery}"` : 'No colleges available for this country'}
+                    </Text>
                   </View>
                 }
               />
@@ -1203,6 +1303,30 @@ const Signupdetail = ({ route }) => {
                   contentContainerStyle={styles.modalContent}
                 />
               )}
+            </View>
+          </Modal>
+
+          {/* Academic Year Modal */}
+          <Modal
+            visible={isAcademicYearModalVisible}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setAcademicYearModalVisible(false)}
+          >
+            <View style={styles.fullModalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Academic Year</Text>
+                <TouchableOpacity onPress={() => setAcademicYearModalVisible(false)}>
+                  <Icon name="close" size={24} color="#000" />
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={academicYears}
+                keyExtractor={(item) => item}
+                renderItem={renderAcademicYearItem}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.modalContent}
+              />
             </View>
           </Modal>
 
@@ -1338,14 +1462,16 @@ const PlanCard = ({ plan, isTablet, isLandscape, screenWidth, data }) => {
         "mobile": data.mobile,
         "payment_id": payment.razorpay_payment_id,
         "course_id": data.courses.id,
+        "course": data.courses.name?.toLowerCase() || 'fmge',
         "plan_id": plan?.id,
         "amount": plan.discount_price,
         "transaction_mode": "upi",
         "transaction_status": "success",
-        "payment_date": "2026-01-30T12:00:00.000Z"
+        "payment_date": new Date().toISOString(),
+        "academic_year": data.academic_year
       }
       console.log("paylo", payload, payment)
-      const respone = await axios.post("https://fornix-medical.vercel.app/api/v1/auth/register-with-plan",
+      const respone = await API.post("/auth/register-with-plan",
         payload
       )
       console.log('res', respone)
@@ -1671,6 +1797,32 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     padding: scale(20),
+    paddingTop: 0,
+  },
+  modalSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    borderRadius: moderateScale(10),
+    marginHorizontal: scale(20),
+    marginVertical: verticalScale(10),
+    paddingHorizontal: scale(10),
+    height: verticalScale(45),
+  },
+  modalSearchIcon: {
+    marginRight: scale(10),
+  },
+  modalSearchInput: {
+    flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: moderateScale(14),
+    color: '#333',
+  },
+  emptyTextModal: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: moderateScale(14),
+    color: '#999',
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,

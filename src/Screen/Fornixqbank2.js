@@ -28,6 +28,7 @@ import axios from 'axios';
 import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { set } from 'react-hook-form';
+import API from '../API/axiosConfig';
 
 // Screen dimensions
 const { width, height } = Dimensions.get('window');
@@ -127,13 +128,9 @@ const Fornixqbank2 = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
-  const { mode, testId, topicId, topicName = 'Anatomy', mood, chapterId, ChapterName, subjectId, Course } = route.params || {};
+  const { mode, testId, topicId, topicName, mood, chapterId, ChapterName, subjectId, Course, selectedChapterIds } = route.params || {};
   const Difficult = mood?.title ?? null
-  console.log("mood in quiz", Difficult)
-  console.log("p", route.params)
-  console.log("SUBJECT ID IN FORNIX QBANK2", subjectId)
-  console.log("COURSE IN FORNIX QBANK2", Course)
-  console.log('mode and mocktestid', testId, mode)
+
 
 
   const getQuestionTypeFromMood = (moodTitle) => {
@@ -168,6 +165,7 @@ const Fornixqbank2 = () => {
   const canSubmit = isLastQuestion && hasAnsweredCurrent.current;
   const [quizStartTime, setQuizStartTime] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [attempted, setAttemptId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const submitProgress = useRef(new Animated.Value(0)).current;
   // Track native selection ranges by question ID
@@ -226,9 +224,7 @@ const Fornixqbank2 = () => {
 
 
 
-  console.log("USER ID ", userId)
   // Track if user has answered current question
-
   const currentQuestion = questions[currentIndex];
 
   // 🔹 Animated loader
@@ -265,41 +261,6 @@ const Fornixqbank2 = () => {
     );
     return () => backHandler.remove();
   }, []);
-
-  // const callMockTestStartApi = async () => {
-  //   if (!userId || !testId) {
-  //     console.log('❌ Missing userId or testId');
-  //     return;
-  //   }
-
-  //   try {
-  //     setLoading(true);
-
-  //     const url = "https://fornix-medical.vercel.app/api/v1/mobile/mock-tests/${testId}/start";
-
-  //     const response = await axios.post(url, {
-  //       user_id: userId,
-  //     });
-
-  //     if (response?.data?.success) {
-  //       setAttemptId(response.data.attempt?.id);
-  //       setQuestions(response.data.questions || []);
-  //       setCurrentIndex(0);
-
-  //       console.log('✅ MOCK TEST STARTED');
-  //     } else {
-  //       Alert.alert('Error', 'Mock Test start failed');
-  //     }
-  //   } catch (error) {
-  //     console.log(
-  //       '❌ MOCK TEST API ERROR:',
-  //       error?.response?.data || error.message
-  //     );
-  //     Alert.alert('Error', 'Unable to start mock test');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   useEffect(() => {
     hasAnsweredCurrent.current = false;
@@ -338,31 +299,51 @@ const Fornixqbank2 = () => {
 
     try {
       setLoading(true);
-
       const questionType = getQuestionTypeFromMood(mood.title);
+      const chapterCount = selectedChapterIds?.length || 0;
+      const isAMC = route.params?.isAMC;
 
-      const body = {
+      let endpoint = '/subject-quiz/start';
+      let body = {
         user_id: userId,
         subject_id: subjectId,
         question_type: questionType,
         limit: 20,
+        chapter_ids: selectedChapterIds || [],
       };
 
-      console.log('📤 SUBJECT QUIZ BODY:', body);
+      // 🔹 AMC Course specific logic
+      if (isAMC) {
+        if (chapterCount === 1) {
+          endpoint = '/amc/chapter-quiz';
+          body = {
+            user_id: userId,
+            chapter_id: selectedChapterIds[0],
+            limit: 20,
+            question_type: questionType,
+          };
+        } else if (chapterCount > 1) {
+          endpoint = '/amc/multi-chapter-quiz';
+          body = {
+            user_id: userId,
+            chapter_ids: selectedChapterIds,
+            limit: 20,
+            question_type: questionType,
+          };
+        }
+      }
 
-      const response = await axios.post(
-        'https://fornix-medical.vercel.app/api/v1/subject-quiz/start',
-        body
-      );
+      console.log(`📤 ${endpoint.toUpperCase()} BODY:`, body);
+
+      const response = await API.post(endpoint, body);
 
       if (response?.data?.success) {
-        setQuestions(response.data.data);
+        setQuestions(response.data.data || []);
         setAttemptId(response.data.attempt_id);
         setCurrentIndex(0);
 
-        console.log('✅ SUBJECT QUIZ LOADED');
+        console.log(`✅ QUIZ LOADED FROM ${endpoint}`);
         console.log('ATTEMPT:', response.data.attempt_id);
-        console.log('QUESTIONS:', response.data);
       } else {
         Alert.alert('Error', 'Subject quiz failed');
       }
@@ -371,7 +352,7 @@ const Fornixqbank2 = () => {
         '❌ SUBJECT QUIZ ERROR:',
         error?.response?.data || error.message
       );
-      Alert.alert('Error', error?.response?.data.message);
+      Alert.alert('Error', error?.response?.data?.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -387,8 +368,8 @@ const Fornixqbank2 = () => {
         chapter_id: chapterId,
         limit: 20,
       };
-      const response = await axios.post(
-        'https://fornix-medical.vercel.app/api/v1/quiz/start',
+      const response = await API.post(
+        '/quiz/start',
         body,
       );
       if (response.data.success) {
@@ -418,21 +399,21 @@ const Fornixqbank2 = () => {
 
   const callTopicQuizApi = async () => {
 
-    if (!userId) {
-      console.log("userId Not Ready, skipping API");
+    if (!userId || !topicId) {
+      console.log("Missing userId or topicId, skipping API");
       return;
     }
     try {
       setLoading(true);
       const body = {
         user_id: userId,
-        "topic_ids": ["fc28caf5-1f7f-47bb-a19e-4572c8a0f2d0", "fbc98178-89dc-442c-9fcc-c0b819e3365a"],
+        topic_ids: Array.isArray(topicId) ? topicId : [topicId],
         limit: 25,
       };
 
       console.log("TOPIC BODY:", body);
-      const response = await axios.post(
-        'https://fornix-medical.vercel.app/api/v1/quiz/start',
+      const response = await API.post(
+        '/quiz/start',
         body,
       );
       if (response?.data?.success) {
@@ -495,9 +476,15 @@ const Fornixqbank2 = () => {
     }
 
     timerRef.current = setInterval(() => {
+      if (submitting) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+        return;
+      }
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
+          timerRef.current = null;
           onTimeFinished(); // 🔥 AUTO SUBMIT
           return 0;
         }
@@ -594,9 +581,7 @@ const Fornixqbank2 = () => {
       setShowExplanation(false);
       hasAnsweredCurrent.current = false;
     }
-
   };
-
 
   const getTimeTakenInSeconds = () => {
     if (!quizStartTime) return 0;
@@ -614,16 +599,6 @@ const Fornixqbank2 = () => {
       answers: answers,
     };
   };
-
-  // const startSubmitProgress = () => {
-  //   submitProgress.setValue(0);
-  //   Animated.timing(submitProgress, {
-  //     toValue: 1,
-  //     duration: 1800,
-  //     useNativeDriver: false,
-  //   }).start();
-  // }
-
 
   const startSubmitProgress = () => {
     submitProgress.setValue(0);
@@ -644,10 +619,13 @@ const Fornixqbank2 = () => {
   };
 
 
-  console.log("USER ANSWERS", userAnswers)
 
   const submitAMCQuiz = async () => {
     try {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       setSubmitting(true);
       startSubmitProgress();
       const answers = userAnswers.map(ans => ({
@@ -663,14 +641,13 @@ const Fornixqbank2 = () => {
         answers: answers,
       };
       console.log('Amc Submit Payload:', JSON.stringify(payload, null, 2));
-      const response = await axios.post("https://fornix-medical.vercel.app/api/v1/subject-quiz/submit",
+      const response = await API.post("/subject-quiz/submit",
         payload
       );
       console.log("AMC SUBMIT RESPONSE", response);
       if (response?.data?.success) {
         setTimeout(() => {
           setSubmitting(false);
-          clearInterval(timerRef.current);
           handleSubmitSuccess(response?.data);
         }, 1800);
       } else {
@@ -685,27 +662,28 @@ const Fornixqbank2 = () => {
   }
 
   const SubmitQuiz = async () => {
-
-    // const isAMC = subjectId === subjectId; // Replace with actual AMC subject ID
     const { isAMC = false } = route.params || {};
     if (isAMC) {
       await submitAMCQuiz();
       return;
     }
+
     try {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       setSubmitting(true);
       startSubmitProgress();
       const payload = buildSubmitPayload();
 
-      const response = await axios.post('https://fornix-medical.vercel.app/api/v1/quiz/submit',
-        payload
-      );
+      const response = await API.post('/quiz/submit', payload);
+
       if (response?.data?.success) {
         setTimeout(() => {
           setSubmitting(false);
           handleSubmitSuccess(response?.data);
         }, 1800);
-
         console.log('SUBMIT DATA', response?.data);
       } else {
         setSubmitting(false);
@@ -716,9 +694,13 @@ const Fornixqbank2 = () => {
       Alert.alert("Error", "Quiz Submit Failed");
       setSubmitting(false);
     }
-  }
+  };
 
   const handleSubmitSuccess = (data) => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     navigation.navigate('Results', {
       resultData: data,
       userAnswers: userAnswers,
@@ -727,7 +709,6 @@ const Fornixqbank2 = () => {
       outOf: '',
       attemptedId: data?.attempt_id,
       userId: userId,
-
     })
   }
 

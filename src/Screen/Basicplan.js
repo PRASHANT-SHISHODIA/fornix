@@ -51,6 +51,80 @@ const getSearchTransform = () => {
   return 0.58; // Normal phones
 };
 
+const FEATURES_CONFIG = [
+  {
+    id: '1',
+    title: 'Q Bank',
+    icon: 'question-circle',
+    description: 'Access question bank',
+    screen: 'Qbanksubject',
+    bgColor: '#E3F2FD',
+    iconColor: '#1976D2',
+  },
+  {
+    id: '2',
+    title: 'PYQs', // Will handle PYTs separately based on course
+    icon: 'file-alt',
+    description: 'Previous year questions',
+    screen: 'PYQs',
+    bgColor: '#FFF3E0',
+    iconColor: '#F57C00',
+  },
+  {
+    id: '3',
+    title: 'Mock Test',
+    icon: 'clipboard-list',
+    description: 'Take mock tests',
+    screen: 'MockTest',
+    bgColor: '#E8F5E9',
+    iconColor: '#388E3C',
+  },
+  {
+    id: '4',
+    title: 'Analysis',
+    icon: 'chart-bar',
+    description: 'Performance analysis',
+    screen: 'AnalysisScreen',
+    bgColor: '#F3E5F5',
+    iconColor: '#7B1FA2',
+  },
+  {
+    id: '5',
+    title: 'Notes',
+    icon: 'sticky-note',
+    description: 'Study notes',
+    screen: 'Notes',
+    bgColor: '#FFFDE7',
+    iconColor: '#FBC02D',
+  },
+  {
+    id: '6',
+    title: 'Smart Tracking',
+    icon: 'chart-line',
+    screen: 'SmartTracking',
+    bgColor: '#E0F2F1',
+    iconColor: '#00796B',
+  },
+  {
+    id: '7',
+    title: 'AI Bot',
+    icon: 'robot',
+    description: 'AI interaction',
+    screen: 'AiBot',
+    bgColor: '#FFEBEE',
+    iconColor: '#D32F2F',
+  },
+  {
+    id: '8',
+    title: 'University exams',
+    icon: 'university',
+    description: 'University exams',
+    screen: 'UniversityExams',
+    bgColor: '#E1F5FE',
+    iconColor: '#0288D1',
+  },
+];
+
 const BasicPlan = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -75,6 +149,7 @@ const BasicPlan = () => {
       setSelectedCourse(parsed);
     }
   };
+  console.log("selectedCourse", selectedCourse);
 
   const fetchSubscriptions = async () => {
     try {
@@ -100,80 +175,21 @@ const BasicPlan = () => {
 
 
 
-  const features = [
-    {
-      id: '1',
-      title: 'Q Bank',
-      icon: 'question-circle',
-      description: 'Access question bank',
-      onPress: () => navigation.navigate('Qbanksubject'),
-      bgColor: '#E3F2FD',
-      iconColor: '#1976D2',
-    },
-    selectedCourse?.courseName?.includes('AMC')
-      ? {
-        id: '2',
-        title: 'PYTs',
-        icon: 'file-alt',
-        description: 'Previous year questions',
+  const features = FEATURES_CONFIG.map(item => {
+    // Especial handling for PYQs/PYTs based on Course
+    if (item.id === '2') {
+      const isAMC = selectedCourse?.courseName?.includes('AMC');
+      return {
+        ...item,
+        title: isAMC ? 'PYTs' : 'PYQs',
         onPress: () => navigation.navigate('PYTS'),
-        bgColor: '#FFF3E0',
-        iconColor: '#F57C00',
-      }
-      : {
-        id: '2',
-        title: 'PYQs',
-        icon: 'file-alt',
-        description: 'Previous year questions',
-        onPress: () => navigation.navigate('PYQs'),
-        bgColor: '#FFF3E0',
-        iconColor: '#F57C00',
-      },
-    {
-      id: '3',
-      title: 'Mock Test',
-      icon: 'clipboard-list',
-      description: 'Take mock tests',
-      onPress: () => navigation.navigate('MockTest'),
-      bgColor: '#E8F5E9',
-      iconColor: '#388E3C',
-    },
-    {
-      id: '4',
-      title: 'Analysis',
-      icon: 'chart-bar',
-      description: 'Performance analysis',
-      onPress: () => navigation.navigate('AnalysisScreen'),
-      bgColor: '#F3E5F5',
-      iconColor: '#7B1FA2',
-    },
-    {
-      id: '5',
-      title: 'Notes',
-      icon: 'sticky-note',
-      description: 'Study notes',
-      onPress: () => navigation.navigate('Notes'),
-      bgColor: '#FFFDE7',
-      iconColor: '#FBC02D',
-    },
-    {
-      id: '6',
-      title: 'Smart Tracking',
-      icon: 'chart-line',
-      onPress: () => navigation.navigate('SmartTracking'),
-      bgColor: '#E0F2F1',
-      iconColor: '#00796B',
-    },
-    {
-      id: '7',
-      title: 'AI Bot',
-      icon: 'robot',
-      description: 'Take mock tests',
-      onPress: () => navigation.navigate('AiBot'),
-      bgColor: '#FFEBEE',
-      iconColor: '#D32F2F',
-    },
-  ];
+      };
+    }
+    return {
+      ...item,
+      onPress: () => navigation.navigate(item.screen),
+    };
+  });
 
   // 🔹 Blinking button animation
   const blinkAnim = useRef(new Animated.Value(0)).current;
@@ -242,7 +258,7 @@ const BasicPlan = () => {
           numColumns={3}
           scrollEnabled={false}
           contentContainerStyle={styles.featuresGrid}
-          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          columnWrapperStyle={{ justifyContent: 'flex-start' }}
           renderItem={({ item }) => (
             <View style={styles.featureItem}>
               <TouchableOpacity
@@ -333,7 +349,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(getResponsiveSize(30)),
   },
   featureItem: {
-    width: (width - scale(getResponsiveSize(60))) / 3.2,
+    width: (width - scale(getResponsiveSize(60))) / 3,
     alignItems: 'center',
     marginBottom: verticalScale(getResponsiveSize(25)),
   },

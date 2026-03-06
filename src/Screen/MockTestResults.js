@@ -34,7 +34,8 @@ const getResponsiveSize = (size) => {
 const MockTestResults = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
 
-  const isMockTest = score === 'mocktest'
+  const source = route.params?.source || 'mocktest';
+  const isUniversity = source === 'university';
 
 
 
@@ -69,7 +70,7 @@ const MockTestResults = ({ route, navigation }) => {
     totalTime: `${minutes}m ${seconds}s`,
     avgTimePerQuestion:
       totalQuestions > 0 ? (timeTaken / totalQuestions).toFixed(1) : 0,
-    category: 'Mock Test',
+    category: isUniversity ? 'University Exam' : 'Mock Test',
   };
 
 
@@ -244,7 +245,7 @@ const MockTestResults = ({ route, navigation }) => {
           styles.headerTitle,
           { fontSize: moderateScale(getResponsiveSize(20)) }
         ]}>
-          Mock Test Results
+          {isUniversity ? 'University Exam' : 'Mock Test'} Results
         </Text>
         <View style={styles.headerRight} />
       </View>
@@ -297,7 +298,7 @@ const MockTestResults = ({ route, navigation }) => {
             navigation.navigate('CheckAttemptedTest', {
               attemptId: attemptId,   // ✅ correct value
               // userId: userId,
-              source: 'mocktest'
+              source: source,
             })
           }
 
@@ -306,7 +307,7 @@ const MockTestResults = ({ route, navigation }) => {
             styles.buttonText,
             { fontSize: moderateScale(getResponsiveSize(16)) }
           ]}>
-            Check Attempted Mock
+            Check Attempted {isUniversity ? 'Exam' : 'Mock'}
           </Text>
           <Icon
             name="arrow-right"

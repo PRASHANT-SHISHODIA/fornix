@@ -16,7 +16,7 @@ import Icon1 from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import API from '../API/axiosConfig';
 
 // Screen dimensions
 const { width, height } = Dimensions.get('window');
@@ -42,20 +42,15 @@ const Chapterwise = ({ route }) => {
   const bookAnim = useRef(new Animated.Value(0)).current;
   const mood = route?.params?.mood ?? null;
   const Course = route?.params?.Course ?? null;
+  const isAMC = route?.params?.isAMC || Course?.courseName?.toUpperCase().includes('AMC');
+  const [selectedChapterIds, setSelectedChapterIds] = useState([]);
   console.log("MODE RECEIVED IN CHAPTERWISE :", mood?.title);
   console.log("SUBJECT ID", subjectId);
   console.log("SUBJECT NAME", subjectName);
 
 
-  // 🔹 Subject list from PDF with images
-  const subjects = [
-    { id: '1', title: 'Upper Limb', image: require('../assets/Images/Upperlimb.png') },
-    { id: '2', title: 'General Anatomy', image: require('../assets/Images/Generalanatony.png') },
-    { id: '3', title: 'Thorax', image: require('../assets/Images/Thorax.png') },
-    { id: '4', title: 'Head & Neck', image: require('../assets/Images/Head&neck.png') },
-    { id: '5', title: 'Neuroanatomy', image: require('../assets/Images/Neuroanatony.png') },
-    { id: '6', title: 'Lower Limb', image: require('../assets/Images/Lowerlimb.png') },
-  ];
+  // 🔹 Subject list removed (handled by API)
+
 
   const getChapterBySubject = async () => {
     try {
@@ -65,22 +60,21 @@ const Chapterwise = ({ route }) => {
         return;
       }
 
-      const responae = await axios.post('https://fornix-medical.vercel.app/api/v1/chapters',
+      const endpoint = isAMC ? '/amc/chapters' : '/chapters';
+      const responae = await API.post(endpoint,
         {
-          subject_id: subjectId || "f36e020a-5ffb-4df9-976a-b289797d8627",
-          mood: mood,
+          subject_id: subjectId,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
           },
         }
       );
-      setChapter(responae.data?.data)
+      setChapter(responae.data?.data || [])
       console.log("API RESPONSE CHAPTER", responae.data.data)
     } catch (error) {
-      console.log("CHAPTER API ERROR", error.responae.data || error.message);
+      console.log("CHAPTER API ERROR", error.response?.data || error.message);
     } finally {
       setLoading(false);
     }
@@ -177,57 +171,96 @@ const Chapterwise = ({ route }) => {
           {loading ? (
             <SkeletonGrid />
           ) : (
-            Chapter.map(sub => (
-              <TouchableOpacity
-                key={sub.id}
-                style={styles.featureCard}
-                onPress={() => {
-                  if (mood) {
-                    navigation.navigate('Selected', {
-                      chapterId: sub.id,
-                      ChapterName: sub.name,
-                      mood: mood,
+            Chapter.map(sub => {
+              const isSelected = selectedChapterIds.includes(sub.id);
+              return (
+                <TouchableOpacity
+                  key={sub.id}
+                  style={[
+                    styles.featureCard,
+                    isAMC && isSelected && styles.featureCardSelected
+                  ]}
+                  onPress={() => {
+                    if (isAMC) {
+                      // 🔹 AMC → Multi-select toggle
+                      if (isSelected) {
+                        setSelectedChapterIds(prev => prev.filter(id => id !== sub.id));
+                      } else {
+                        setSelectedChapterIds(prev => [...prev, sub.id]);
+                      }
+                    } else {
+                      // 🔹 Normal flow
+                      if (mood) {
+                        navigation.navigate('Selected', {
+                          chapterId: sub.id,
+                          ChapterName: sub.name,
+                          mood: mood,
+                        });
+                      } else {
+                        navigation.navigate('Mood', {
+                          subjectId: sub.id,
+                          subjectName: sub.name,
+                          Course: Course,
+                          from: 'mood',
+                          chapterId: sub.id,
+                          chapterName: sub.name,
+                        });
+                      }
+                    }
+                  }}>
+                  <View style={styles.featureContent}>
+                    <View style={styles.featureIconContainer}>
+                      {isAMC && (
+                        <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                          {isSelected && <Icon1 name="checkmark" size={12} color="white" />}
+                        </View>
+                      )}
+                      {sub.icon_url ? (
+                        <Image
+                          source={{ uri: sub.icon_url }}
+                          style={styles.subjectImage}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <Icon name="book-open" size={22} color={isAMC && isSelected ? "#F87F16" : "#FFFFFF"} />
+                      )}
+                    </View>
 
-                    });
-                  } else {
-                    // navigation.navigate('Selected', {
-                    //   chapterId: sub.id,
-                    //   ChapterName: sub.name,
-                    //   // mood:mood,
-                    // });
-                    navigation.navigate('Mood', {
-                      subjectId: sub.id,
-                      subjectName: sub.name,
-                      Course: Course,
-                      from: 'mood',
-                    });
-                  }
-                }
-
-                }>
-                <View style={styles.featureContent}>
-                  <View style={styles.featureIconContainer}>
-                    {sub.icon_url ? (
-                      <Image
-                        source={{ uri: sub.icon_url }}
-                        style={styles.subjectImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <Icon name="book-open" size={22} color="#1A3848" />
-                    )}
+                    <View style={styles.textContainer}>
+                      <Text style={[styles.featureTitle, isAMC && isSelected && styles.featureTitleSelected]}>
+                        {limitwords(sub.name, 15)}
+                      </Text>
+                    </View>
                   </View>
-
-                  <View style={styles.textContainer}>
-                    <Text style={styles.featureTitle}>
-                      {limitwords(sub.name, 15)}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))
+                </TouchableOpacity>
+              );
+            })
           )}
         </View>
+
+        {/* 🔹 Proceed Button for AMC */}
+        {isAMC && Chapter.length > 0 && (
+          <TouchableOpacity
+            style={[
+              styles.proceedButton,
+              selectedChapterIds.length === 0 && styles.disabledButton
+            ]}
+            disabled={selectedChapterIds.length === 0}
+            onPress={() => {
+              navigation.navigate('Mood', {
+                subjectId,
+                subjectName,
+                Course,
+                selectedChapterIds,
+                from: 'amcChapters',
+              });
+            }}>
+            <Text style={styles.proceedButtonText}>
+              Select Mode ({selectedChapterIds.length} chosen)
+            </Text>
+            <Icon1 name="arrow-forward" size={18} color="white" />
+          </TouchableOpacity>
+        )}
 
       </ScrollView>
     </View>
@@ -360,7 +393,53 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#E0E0E0',
   },
-
+  featureCardSelected: {
+    borderColor: '#F87F16',
+    borderWidth: 2,
+    backgroundColor: '#FFE0B2',
+  },
+  featureTitleSelected: {
+    color: '#F87F16',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    marginRight: scale(5),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  checkboxSelected: {
+    backgroundColor: '#F87F16',
+    borderColor: '#F87F16',
+  },
+  proceedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F87F16',
+    marginHorizontal: scale(20),
+    marginVertical: verticalScale(20),
+    paddingVertical: verticalScale(15),
+    borderRadius: moderateScale(12),
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
+  },
+  proceedButtonText: {
+    color: 'white',
+    fontSize: moderateScale(16),
+    fontFamily: 'Poppins-Bold',
+    marginRight: scale(10),
+  },
 });
 
 export default Chapterwise;

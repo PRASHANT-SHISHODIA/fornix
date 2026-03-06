@@ -39,6 +39,7 @@ const Mood = () => {
   const Course = route?.params?.Course;
   const mode = route.params?.mode;
   const mockTestId = route.params?.testId;
+  const selectedChapterIds = route.params?.selectedChapterIds;
   console.log('Via Mood Screen - Subject ID:', subjectId);
   console.log('Via Mood Screen - Subject Name:', subjectName);
   console.log('Via Mood Screen - Course:', Course);
@@ -60,6 +61,7 @@ const Mood = () => {
           subjectName,
           Course,
           isAMC: true,
+          selectedChapterIds: selectedChapterIds || [],
         },
       };
     }
