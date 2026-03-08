@@ -53,13 +53,44 @@ const SmartTrackingScreen = ({ navigation, route }) => {
 
       if (courseRaw) {
         const course = JSON.parse(courseRaw);
-        courseId = course.id || course.courseId;
+        courseId = course.courseId || course.id;
       } else if (route.params?.courseId || route.params?.course) {
         courseId = route.params.courseId || route.params.course;
       }
 
+      // 🔹 FALLBACK: If courseId is still missing, try to get from User Profile API
+      if (userId && !courseId) {
+        console.log('⚠️ courseId missing in SmartTracking, trying to fetch from Profile fallback...');
+        const token = await AsyncStorage.getItem("token");
+        if (token) {
+          try {
+            const profileRes = await axios.post("https://fornix-medical.vercel.app/api/v1/user/get",
+              { id: userId },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (profileRes.data?.success && profileRes.data?.subscriptions?.length > 0) {
+              const activeSub = profileRes.data.subscriptions.find(s => s.is_active);
+              if (activeSub) {
+                courseId = activeSub.course_id || activeSub.course?.id;
+                console.log('✅ Found courseId from User Profile Fallback in SmartTracking:', courseId);
+
+                // Save it back for future use
+                await AsyncStorage.setItem('selectedCourse', JSON.stringify({
+                  courseId: courseId,
+                  courseName: activeSub.course?.name || 'Selected Course'
+                }));
+              }
+            }
+          } catch (profileErr) {
+            console.log("Profile fallback error in SmartTracking:", profileErr);
+          }
+        }
+      }
+
       if (!userId || !courseId) {
-        throw new Error('User or Course not found');
+        console.log('Missing IDs:', { userId, courseId });
+        setApiData({ success: false, message: 'User or Course not found' });
+        return;
       }
 
       const body = {
@@ -76,7 +107,8 @@ const SmartTrackingScreen = ({ navigation, route }) => {
       setApiData(res.data);
       console.log("Smart Tracking Data:", res.data)
     } catch (err) {
-      console.log("Error fetching smart tracking:", err);
+      console.log("Error fetching smart tracking:", err?.message || err);
+      setApiData({ success: false, message: err?.message || "Internal Error" });
     } finally {
       setLoading(false);
     }

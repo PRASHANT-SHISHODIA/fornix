@@ -53,6 +53,7 @@ const LoginDetail = () => {
   };
 
 
+
   // Toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -98,15 +99,16 @@ const LoginDetail = () => {
         }
 
         // 🔥 SAVE ENROLLED COURSE FROM SERVER IF AVAILABLE
-        // if (data.enrolled_course) {
-        //   await AsyncStorage.setItem(
-        //     'selectedCourse',
-        //     JSON.stringify({
-        //       courseId: data.enrolled_course.course_id,
-        //       courseName: data.enrolled_course.course_name,
-        //     })
-        //   );
-        // }
+        if (data.enrolled_course) {
+          await AsyncStorage.setItem(
+            'selectedCourse',
+            JSON.stringify({
+              courseId: data.enrolled_course.course_id,
+              courseName: data.enrolled_course.course_name,
+            })
+          );
+        }
+        console.log("ENROLLED COURSE SAVED", data.enrolled_course);
 
         // 🔥 READ COURSE SELECTION
         const selectedCourse = await getSelectedCourseFromStorage();

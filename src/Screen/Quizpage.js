@@ -62,7 +62,7 @@ const Quizpage = () => {
   const route = useRoute();
 
   /* ---------- Route Params (Mood Screen) ---------- */
-  const { mode, testId } = route.params || {};
+  const { mode, testId, examId } = route.params || {};
 
   /* ---------- States ---------- */
   const [loading, setLoading] = useState(true);
@@ -72,6 +72,7 @@ const Quizpage = () => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({}); // {0:'a',1:'b'}
+  const [testName, setTestName] = useState('');
 
   const [timeLeft, setTimeLeft] = useState(60);
 
@@ -97,35 +98,66 @@ const Quizpage = () => {
       }
 
       const userId = await AsyncStorage.getItem('user_id');
-      console.log('🧠 MODE:', mode);
-      console.log('🧪 TEST ID:', testId);
+      const token = await AsyncStorage.getItem('token');
+
+      console.log('� MODE:', mode);
       console.log('👤 USER ID:', userId);
 
-      if (!userId || !testId) {
-        Alert.alert('Error', 'User ID or Test ID missing');
+      const idToUse = mode === 'university_exam' ? examId : testId;
+
+      if (!userId || !idToUse) {
+        console.log('❌ Missing IDs:', { userId, testId, examId, mode });
+        Alert.alert('Error', `Required ID missing (${mode === 'university_exam' ? 'Exam ID' : 'Test ID'})`);
         setLoading(false);
         return;
       }
 
-      const res = await axios.post(
-        `${START_TEST_API}/${testId}/start`,
-        {
-          user_id: userId,
-          mode: mode || 'practice',
-        },
-      );
+      let res;
+      if (mode === 'university_exam') {
+        console.log('🎓 Starting University Exam:', examId);
+        res = await API.post(
+          '/university-exams/details',
+          {
+            user_id: userId,
+            exam_id: examId,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+      } else {
+        console.log('🧪 Starting Mock Test:', testId);
+        // Using centralized API for Mock Test as well
+        res = await API.post(
+          `/mobile/mock-tests/${testId}/start`,
+          {
+            user_id: userId,
+            mode: 'practice', // Default mode for mock tests
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+      }
 
-      console.log('📦 START TEST RESPONSE:', res.data);
+      console.log('📦 START RESPONSE:', res.data);
 
       if (res.data?.success) {
-        setAttemptId(res.data.attempt?.id);
-        setQuestions(res.data.questions || []);
+        if (mode === 'university_exam') {
+          setAttemptId(res.data.attempt_id);
+          setQuestions(res.data.questions || []);
+          setTestName(res.data.exam?.name || 'University Exam');
+        } else {
+          setAttemptId(res.data.attempt?.id);
+          setQuestions(res.data.questions || []);
+          setTestName(res.data.test?.title || 'Mock Test');
+        }
       } else {
-        Alert.alert('Error', 'Unable to start test');
+        Alert.alert('Error', res.data?.message || 'Unable to load test questions');
       }
     } catch (err) {
-      console.log('❌ START TEST ERROR:', err);
-      Alert.alert('Error', 'Something went wrong');
+      console.log('❌ INIT TEST ERROR:', err?.response?.data || err);
+      Alert.alert('Error', err?.response?.data?.message || 'Something went wrong while starting the test');
     } finally {
       setLoading(false);
     }
@@ -204,21 +236,40 @@ const Quizpage = () => {
         return;
       }
 
-      const payload = {
-        user_id: userId,
-        attempt_id: attemptId,
-        answers: buildSubmitPayload(),
-        time_taken_seconds: totalTimeTaken,
-      };
-
-      console.log('Submit Payload:', JSON.stringify(payload, null, 2));
-
       let endpoint = '';
-      if (route.params?.mode === 'university_exam') {
-        endpoint = '/university-exams/submit';
+      let payload = {};
+
+      if (mode === 'university_exam') {
+        // ✅ NEW FLOW FOR UNIVERSITY EXAMS
+        endpoint = '/university-exams/attempt';
+
+        // Format answers as { "question_id": "selected_option" }
+        const universityAnswers = {};
+        Object.keys(answers).forEach(index => {
+          const qId = questions[index]?.id;
+          if (qId) {
+            universityAnswers[qId] = answers[index];
+          }
+        });
+
+        payload = {
+          user_id: userId,
+          exam_id: examId,
+          answers: universityAnswers,
+        };
       } else {
+        // ✅ EXISTING FLOW FOR MOCK TESTS
         endpoint = `/mobile/mock-tests/${testId}/submit`;
+        payload = {
+          user_id: userId,
+          attempt_id: attemptId,
+          answers: buildSubmitPayload(),
+          time_taken_seconds: totalTimeTaken,
+        };
       }
+
+      console.log('Submit Endpoint:', endpoint);
+      console.log('Submit Payload:', JSON.stringify(payload, null, 2));
 
       const res = await API.post(endpoint, payload, {
         headers: {
@@ -229,18 +280,28 @@ const Quizpage = () => {
       console.log('SUBMIT RESPONSE:', res.data);
 
       if (res.data?.success) {
-        const resultData = res.data.result || res.data.data;
+        // Support both nested and flat response structures
+        let resultData = res.data.result || res.data.data || res.data.submission || res.data;
+
+        // If it's a university exam without percentage, calculate it
+        if (mode === 'university_exam' && resultData.score !== undefined && !resultData.percentage) {
+          resultData.total_questions = resultData.total_marks || questions.length;
+          resultData.correct_answers = resultData.score;
+          resultData.percentage = ((resultData.score / (resultData.total_questions || 1)) * 100).toFixed(1);
+        }
+
         navigation.navigate('MockTestResults', {
-          source: route.params?.mode === 'university_exam' ? 'university' : 'mocktest',
+          source: mode === 'university_exam' ? 'university' : 'mocktest',
           result: resultData,
           questions: questions,
         });
       } else {
-        Alert.alert('Error', "Submission failed");
+        Alert.alert('Error', res.data?.message || "Submission failed");
       }
     } catch (error) {
       console.log("SUBMIT ERROR:", error?.response?.data || error);
-      Alert.alert("Error", 'Something went wrong while Submitting');
+      const errorMsg = error?.response?.data?.message || 'Something went wrong while Submitting';
+      Alert.alert("Error", errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -277,14 +338,16 @@ const Quizpage = () => {
                   color="#FFFFFF"
                 />
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>Mock</Text>
+              <Text style={styles.headerTitle} numberOfLines={1}>
+                {mode === 'university_exam' ? 'University Exam' : 'Mock Test'}
+              </Text>
             </View>
           </View>
         </View>
 
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ fontSize: responsiveFontSize(18), fontFamily: 'Poppins-SemiBold', color: '#000' }}>
-            No Mock available for this
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 }}>
+          <Text style={{ fontSize: responsiveFontSize(18), fontFamily: 'Poppins-SemiBold', color: '#000', textAlign: 'center' }}>
+            No questions available for this {mode === 'university_exam' ? 'Exam' : 'Mock'}
           </Text>
           <TouchableOpacity
             style={{ marginTop: 20, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#1A3848', borderRadius: 8 }}
@@ -303,8 +366,29 @@ const Quizpage = () => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar backgroundColor="#F87F16" barStyle="dark-content" />
 
+      {/* 🔹 Header added for consistency */}
+      <View style={styles.header}>
+        <View style={styles.searchContainer}>
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}>
+              <Icon1
+                name="arrow-back"
+                size={moderateScale(getResponsiveSize(28))}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {testName || (mode === 'university_exam' ? 'University Exam' : 'Mock Test')}
+            </Text>
+          </View>
+        </View>
+      </View>
+
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.scrollContent, { marginTop: -verticalScale(30), paddingBottom: 100 }]}
         showsVerticalScrollIndicator={false}>
 
         <Text style={styles.progressText}>
@@ -314,7 +398,7 @@ const Quizpage = () => {
         <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
 
         <Text style={styles.questionText}>
-          {currentIndex + 1}. {currentQuestion?.text}
+          {currentIndex + 1}. {currentQuestion?.text || currentQuestion?.question || 'No question text'}
         </Text>
 
         {currentQuestion?.image_url && (
@@ -325,7 +409,12 @@ const Quizpage = () => {
           />
         )}
 
-        {currentQuestion?.options?.map(option => (
+        {(currentQuestion?.options || [
+          { key: 'a', content: currentQuestion?.option_a },
+          { key: 'b', content: currentQuestion?.option_b },
+          { key: 'c', content: currentQuestion?.option_c },
+          { key: 'd', content: currentQuestion?.option_d },
+        ].filter(opt => opt.content)).map(option => (
           <TouchableOpacity
             key={option.key}
             style={[

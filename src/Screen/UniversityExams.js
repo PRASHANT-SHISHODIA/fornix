@@ -26,29 +26,28 @@ const UniversityExams = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [exams, setExams] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [activeTab, setActiveTab] = useState('exams'); // 'exams' or 'history'
+  const [startingExamName, setStartingExamName] = useState('');
 
   useEffect(() => {
-    fetchExams();
-  }, []);
+    if (activeTab === 'exams') {
+      fetchExams();
+    } else {
+      fetchHistory();
+    }
+  }, [activeTab]);
 
   const fetchExams = async () => {
     try {
+      setLoading(true);
       const token = await AsyncStorage.getItem('token');
       const userId = await AsyncStorage.getItem('user_id');
-      console.log('Fetching exams for ID:', userId);
-
       const response = await API.post(
         '/university-exams/list',
         { user_id: userId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      console.log('Full API Response:', response.data);
-
       if (response.data?.success) {
         setExams(response.data.data || []);
       }
@@ -59,73 +58,138 @@ const UniversityExams = () => {
     }
   };
 
-  const renderExamCard = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.iconCircle}>
-          <Icon name="university" size={20} color="#F87F16" />
-        </View>
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.examName}>{item.name}</Text>
-          <Text style={styles.universityName}>{item.university_name}</Text>
-        </View>
-        <View style={[styles.statusBadge, { backgroundColor: item.is_attempted ? '#E8F5E9' : '#FFF3E0' }]}>
-          <Text style={[styles.statusText, { color: item.is_attempted ? '#2E7D32' : '#E65100' }]}>
-            {item.is_attempted ? 'Attempted' : 'Pending'}
-          </Text>
-        </View>
-      </View>
+  const fetchHistory = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      const userId = await AsyncStorage.getItem('user_id');
 
-      <View style={styles.divider} />
+      console.log('--- FETCHING HISTORY ---');
+      console.log('User ID:', userId);
 
-      <View style={styles.detailsGrid}>
-        <View style={styles.detailItem}>
-          <Icon name="graduation-cap" size={14} color="#1A3848" />
-          <Text style={styles.detailText}>{item.academic_year}</Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Icon name="clock" size={14} color="#1A3848" />
-          <Text style={styles.detailText}>{item.duration_minutes} mins</Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Icon name="book" size={14} color="#1A3848" />
-          <Text style={styles.detailText}>{item.subjects}</Text>
-        </View>
-      </View>
+      const response = await API.post(
+        '/university-exams/history',
+        { user_id: userId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      {item.is_attempted && (
-        <View style={styles.scoreContainer}>
-          <View style={styles.scoreInfo}>
-            <Text style={styles.scoreLabel}>Score:</Text>
-            <Text style={styles.scoreValue}>{item.attempt_score}/{item.attempt_total_marks}</Text>
+      console.log('HISTORY API SUCCESS:', response.data);
+
+      if (response.data?.success) {
+        setHistory(response.data.data || []);
+      }
+    } catch (error) {
+      console.log('--- HISTORY API ERROR ---');
+      console.log('Error:', error?.response?.data || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderExamCard = ({ item }) => {
+    const isHistory = activeTab === 'history';
+
+    const CardContent = (
+      <>
+        <View style={styles.cardHeader}>
+          <View style={styles.iconCircle}>
+            <Icon name="university" size={20} color="#F87F16" />
           </View>
-          <View style={styles.progressBarBg}>
-            <View
-              style={[
-                styles.progressBarFill,
-                { width: `${(item.attempt_score / item.attempt_total_marks) * 100}%` }
-              ]}
-            />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.examName}>{item.exam_name || item.name}</Text>
+            <Text style={styles.universityName}>{item.university_name || 'University Exam'}</Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: (item.is_attempted || isHistory) ? '#E8F5E9' : '#FFF3E0' }]}>
+            <Text style={[styles.statusText, { color: (item.is_attempted || isHistory) ? '#2E7D32' : '#E65100' }]}>
+              {isHistory ? 'Completed' : (item.is_attempted ? 'Attempted' : 'Pending')}
+            </Text>
           </View>
         </View>
-      )}
 
-      <TouchableOpacity
-        style={styles.startButton}
-        activeOpacity={0.8}
-        onPress={() => handleStartExam(item.id)}
-      >
-        <Text style={styles.startButtonText}>
-          {item.is_attempted ? 'Retake Exam' : 'Start Exam'}
-        </Text>
-        <Icon1 name="arrow-forward" size={18} color="white" />
-      </TouchableOpacity>
-    </View>
-  );
+        <View style={styles.divider} />
 
-  const handleStartExam = async (examId) => {
+        <View style={styles.detailsGrid}>
+          <View style={styles.detailItem}>
+            <Icon name="graduation-cap" size={14} color="#1A3848" />
+            <Text style={styles.detailText}>{item.academic_year || 'N/A'}</Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Icon name="clock" size={14} color="#1A3848" />
+            <Text style={styles.detailText}>{item.duration_minutes} mins</Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Icon name="book" size={14} color="#1A3848" />
+            <Text style={styles.detailText}>{item.exam_subjects || item.subjects || 'N/A'}</Text>
+          </View>
+        </View>
+
+        {(item.is_attempted || isHistory || item.score !== undefined || item.attempt_score !== undefined) && (
+          <View style={styles.scoreContainer}>
+            <View style={styles.scoreInfo}>
+              <Text style={styles.scoreLabel}>Final Score:</Text>
+              <Text style={styles.scoreValue}>
+                {item.score !== undefined ? item.score : (item.attempt_score !== undefined ? item.attempt_score : 0)}
+                /
+                {item.total_marks || item.attempt_total_marks || 0}
+              </Text>
+            </View>
+            <View style={styles.progressBarBg}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: `${((item.score ?? item.attempt_score ?? 0) / (item.total_marks ?? (item.attempt_total_marks || 1))) * 100}%`
+                  }
+                ]}
+              />
+            </View>
+            {isHistory && item.completed_at && (
+              <Text style={[styles.detailText, { marginTop: 8, fontSize: 10, color: '#666' }]}>
+                Completed on: {new Date(item.completed_at).toLocaleDateString()}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {!isHistory && (
+          <TouchableOpacity
+            style={styles.startButton}
+            activeOpacity={0.8}
+            onPress={() => handleStartExam(item.id, item.name || item.exam_name)}
+          >
+            <Text style={styles.startButtonText}>
+              {item.is_attempted ? 'Retake Exam' : 'Start Exam'}
+            </Text>
+            <Icon1 name="arrow-forward" size={18} color="white" />
+          </TouchableOpacity>
+        )}
+      </>
+    );
+
+    if (isHistory) {
+      return (
+        <TouchableOpacity
+          style={styles.card}
+          // activeOpacity={0.9}
+          // onPress={() => item.is_attempted && navigation.navigate('MockTestResults', { result: item, source: 'university' })}
+          onPress={() => isHistory ? navigation.navigate('UniversityExamResults', { examId: item.exam_id || item.id, examName: item.exam_name || item.name }) : handleStartExam(item.id, item.name || item.exam_name)}
+        >
+          {CardContent}
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <View style={styles.card}>
+        {CardContent}
+      </View>
+    );
+  };
+
+  const handleStartExam = async (examId, examName = '') => {
     try {
       console.log('--- START EXAM FLOW ---');
+      setStartingExamName(examName);
       setLoading(true);
       const userId = await AsyncStorage.getItem('user_id');
       const token = await AsyncStorage.getItem('token');
@@ -181,6 +245,7 @@ const UniversityExams = () => {
       Alert.alert('Error', errorMsg);
     } finally {
       setLoading(false);
+      setStartingExamName('');
       console.log('--- END EXAM FLOW ---');
     }
   };
@@ -190,31 +255,51 @@ const UniversityExams = () => {
       <StatusBar barStyle={'dark-content'} backgroundColor="#F5F5F5" />
 
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Icon1 name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>University Exams</Text>
-        <View style={{ width: 40 }} />
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Icon1 name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>University Exams</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        {/* Tab Switcher */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'exams' && styles.activeTabButton]}
+            onPress={() => setActiveTab('exams')}
+          >
+            <Text style={[styles.tabText, activeTab === 'exams' && styles.activeTabText]}>Exams</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'history' && styles.activeTabButton]}
+            onPress={() => setActiveTab('history')}
+          >
+            <Text style={[styles.tabText, activeTab === 'history' && styles.activeTabText]}>History</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#F87F16" />
-          <Text style={styles.loadingText}>Fetching Exams...</Text>
+          <Text style={styles.loadingText}>
+            {startingExamName ? `Starting ${startingExamName}...` : `Loading ${activeTab === 'exams' ? 'Exams' : 'History'}...`}
+          </Text>
         </View>
-      ) : exams.length === 0 ? (
+      ) : (activeTab === 'exams' ? exams : history).length === 0 ? (
         <View style={styles.centered}>
           <Icon name="clipboard-list" size={60} color="#DDD" />
-          <Text style={styles.emptyText}>No University Exams Available</Text>
+          <Text style={styles.emptyText}>No {activeTab === 'exams' ? 'Exams' : 'History'} Available</Text>
         </View>
       ) : (
         <FlatList
-          data={exams}
-          keyExtractor={item => item.id}
+          data={activeTab === 'exams' ? exams : history}
+          keyExtractor={(item, index) => (item.attempt_id || item.id || index.toString())}
           renderItem={renderExamCard}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
@@ -229,14 +314,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
-  header: {
+  headerContainer: {
     backgroundColor: '#F87F16',
+    elevation: 4,
+  },
+  header: {
     height: moderateScale(60),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
-    elevation: 4,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingBottom: 10,
+    paddingHorizontal: 15,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  activeTabButton: {
+    borderBottomColor: 'white',
+  },
+  tabText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontFamily: 'Poppins-Medium',
+    fontSize: moderateScale(14),
+  },
+  activeTabText: {
+    color: 'white',
+    fontFamily: 'Poppins-Bold',
   },
   backButton: {
     padding: 8,

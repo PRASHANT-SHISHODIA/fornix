@@ -251,6 +251,13 @@ const Fornixqbank2 = () => {
     return () => animation?.stop();
   }, [loading]);
 
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
 
 
   // 🔹 Handle hardware back button

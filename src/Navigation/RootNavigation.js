@@ -44,6 +44,7 @@ import AiBot from '../Screen/AiBot';
 import AIChatSessionsScreen from '../Screen/AIChatSessionsScreen';
 import ForgotPassword from '../Screen/ForgotPassword';
 import UniversityExams from '../Screen/UniversityExams';
+import UniversityExamResults from '../Screen/UniversityExamResults';
 // import { configureGoogle } from '../Screen/GoogleConfig';
 
 
@@ -270,6 +271,11 @@ function RootNavigation() {
           options={{ headerShown: false }}
         />
 
+        <Stack.Screen
+          name='UniversityExamResults'
+          component={UniversityExamResults}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name='ForgotPassword'
           component={ForgotPassword}

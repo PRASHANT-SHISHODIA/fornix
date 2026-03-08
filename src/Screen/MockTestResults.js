@@ -233,7 +233,7 @@ const MockTestResults = ({ route, navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.replace('TabNavigator', { screen: 'Home' })}
+          onPress={() => isUniversity ? navigation.replace('UniversityExams') : navigation.replace('TabNavigator', { screen: 'Home' })}
         >
           <Icon
             name="arrow-left"
@@ -284,38 +284,39 @@ const MockTestResults = ({ route, navigation }) => {
         {renderTimeInfo()}
 
         {/* Check Attempted Quiz Button */}
-        <TouchableOpacity
-          style={[
-            styles.button,
-            {
-              paddingVertical: verticalScale(getResponsiveSize(16)),
-              borderRadius: moderateScale(getResponsiveSize(25)),
-              marginTop: verticalScale(getResponsiveSize(30)),
+        {!isUniversity && (
+          <TouchableOpacity
+            style={[
+              styles.button,
+              {
+                paddingVertical: verticalScale(getResponsiveSize(16)),
+                borderRadius: moderateScale(getResponsiveSize(25)),
+                marginTop: verticalScale(getResponsiveSize(30)),
+              }
+            ]}
+            activeOpacity={0.8}
+            onPress={() =>
+              navigation.navigate('CheckAttemptedTest', {
+                attemptId: attemptId,   // ✅ correct value
+                // userId: userId,
+                source: source,
+              })
             }
-          ]}
-          activeOpacity={0.8}
-          onPress={() =>
-            navigation.navigate('CheckAttemptedTest', {
-              attemptId: attemptId,   // ✅ correct value
-              // userId: userId,
-              source: source,
-            })
-          }
-
-        >
-          <Text style={[
-            styles.buttonText,
-            { fontSize: moderateScale(getResponsiveSize(16)) }
-          ]}>
-            Check Attempted {isUniversity ? 'Exam' : 'Mock'}
-          </Text>
-          <Icon
-            name="arrow-right"
-            size={moderateScale(getResponsiveSize(16))}
-            color="white"
-            style={styles.buttonIcon}
-          />
-        </TouchableOpacity>
+          >
+            <Text style={[
+              styles.buttonText,
+              { fontSize: moderateScale(getResponsiveSize(16)) }
+            ]}>
+              Check Attempted Mock
+            </Text>
+            <Icon
+              name="arrow-right"
+              size={moderateScale(getResponsiveSize(16))}
+              color="white"
+              style={styles.buttonIcon}
+            />
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
     </View>

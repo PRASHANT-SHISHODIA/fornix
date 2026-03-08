@@ -336,7 +336,7 @@ const Signupdetail = ({ route }) => {
         gender: getValues("gender"),
         mobile: getValues("mobile"),
         course_id: selectedCourse.id,
-        course: selectedCourse.name?.toLowerCase() || 'fmge',
+        course: selectedCourse.name?.toLowerCase(),
         academic_year: getValues("academic_year"),
       };
 
@@ -355,7 +355,6 @@ const Signupdetail = ({ route }) => {
           "user_data",
           JSON.stringify(response.data.user)
         );
-
         if (response.data.enrolled_course) {
           await AsyncStorage.setItem(
             "selectedCourse",
@@ -365,6 +364,7 @@ const Signupdetail = ({ route }) => {
             })
           );
         }
+        console.log("ENROLLED COURSE SAVED", response.data.enrolled_course);
 
         Alert.alert("Success 🎉", response.data.message, [
           {
@@ -1462,7 +1462,7 @@ const PlanCard = ({ plan, isTablet, isLandscape, screenWidth, data }) => {
         "mobile": data.mobile,
         "payment_id": payment.razorpay_payment_id,
         "course_id": data.courses.id,
-        "course": data.courses.name?.toLowerCase() || 'fmge',
+        "course": data.courses.name?.toLowerCase(),
         "plan_id": plan?.id,
         "amount": plan.discount_price,
         "transaction_mode": "upi",
@@ -1476,6 +1476,7 @@ const PlanCard = ({ plan, isTablet, isLandscape, screenWidth, data }) => {
       )
       console.log('res', respone)
       await AsyncStorage.setItem('selectedCourse', JSON.stringify(dataa));
+      console.log("selectedCourse", dataa)
     } catch (error) {
       console.log('save error', error);
     }

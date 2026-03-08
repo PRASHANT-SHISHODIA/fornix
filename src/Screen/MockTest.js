@@ -16,6 +16,8 @@ import Icon1 from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import API from '../API/axiosConfig';
+import LinearGradient from 'react-native-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
@@ -72,11 +74,37 @@ const MockTest = ({ navigation, route }) => {
 
       if (!storedUserId) {
         Alert.alert('Error', 'User not found');
+        setLoading(false);
         return;
       }
 
+      // 🔹 FALLBACK: If courseId is still missing, try to get from User Profile API
       if (!currentCourseId) {
-        Alert.alert('Error', 'Course not found');
+        console.log('⚠️ courseId missing in MockTest, trying to fetch from Profile fallback...');
+        const token = await AsyncStorage.getItem("token");
+        if (token && storedUserId) {
+          const res = await API.post("/user/get", { id: storedUserId }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.data?.success && res.data?.subscriptions?.length > 0) {
+            const activeSub = res.data.subscriptions.find(s => s.is_active);
+            if (activeSub) {
+              currentCourseId = activeSub.course_id || activeSub.course?.id;
+              console.log('✅ Found courseId from User Profile Fallback:', currentCourseId);
+
+              // Save it back to AsyncStorage for future use
+              await AsyncStorage.setItem('selectedCourse', JSON.stringify({
+                courseId: currentCourseId,
+                courseName: activeSub.course?.name || 'Selected Course'
+              }));
+            }
+          }
+        }
+      }
+
+      if (!currentCourseId) {
+        Alert.alert('Error', 'Course not found. Please select a course again.');
+        setLoading(false);
         return;
       }
 
@@ -84,8 +112,8 @@ const MockTest = ({ navigation, route }) => {
       setCourseId(currentCourseId);
 
     } catch (err) {
-      console.log('Mock tests API error:', error);
-      Alert.alert('Error', 'Failed to load data');
+      console.log('Mock tests load error:', err?.message || err);
+      setLoading(false);
     }
   };
 

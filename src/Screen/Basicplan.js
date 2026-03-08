@@ -143,10 +143,23 @@ const BasicPlan = () => {
   };
 
   const loadCourse = async () => {
-    const courseData = await AsyncStorage.getItem('selectedCourse');
-    if (courseData) {
-      const parsed = JSON.parse(courseData);
-      setSelectedCourse(parsed);
+    try {
+      const courseData = await AsyncStorage.getItem('selectedCourse');
+      if (courseData) {
+        const parsed = JSON.parse(courseData);
+        const id = parsed.courseId || parsed.id;
+        if (id) {
+          const standardized = {
+            ...parsed,
+            courseId: id,
+            courseName: parsed.courseName || parsed.name || 'Selected Course'
+          };
+          setSelectedCourse(standardized);
+          console.log("✅ Basicplan Course loaded:", standardized);
+        }
+      }
+    } catch (err) {
+      console.log("Basicplan loadCourse error:", err?.message || err);
     }
   };
   console.log("selectedCourse", selectedCourse);
